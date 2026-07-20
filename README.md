@@ -194,4 +194,5 @@ php artisan test
 
 ## Lisensi
 
+PKSPL IPB
 Proyek ini menggunakan lisensi [MIT](https://opensource.org/licenses/MIT).
