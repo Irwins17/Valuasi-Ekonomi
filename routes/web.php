@@ -1,0 +1,127 @@
+<?php
+
+use App\Http\Controllers\Admin\AuditLogController;
+use App\Http\Controllers\Admin\BenefitController;
+use App\Http\Controllers\Admin\CostController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\EnvironmentalCoefficientController;
+use App\Http\Controllers\Admin\MarketPriceController;
+use App\Http\Controllers\Admin\Modules\CvmController;
+use App\Http\Controllers\Admin\Modules\EopController;
+use App\Http\Controllers\Admin\Modules\TcmController;
+use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\SensitivityController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Public\LandingController;
+use Illuminate\Support\Facades\Route;
+
+// Public Routes
+Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/dashboard-publik', [LandingController::class, 'dashboard'])->name('public.dashboard');
+Route::get('/glossary', [LandingController::class, 'glossary'])->name('public.glossary');
+Route::get('/project/{id}', [LandingController::class, 'projectDetail'])->name('public.project');
+
+// Auth Routes
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->name('login.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Admin Routes (Protected)
+Route::middleware(['auth'])->group(function () {
+    // Dashboard
+    Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Projects
+    Route::prefix('/admin/projects')->group(function () {
+        Route::get('/', [ProjectController::class, 'index'])->name('admin.projects.index');
+        Route::get('/create', [ProjectController::class, 'create'])->name('admin.projects.create');
+        Route::post('/', [ProjectController::class, 'store'])->name('admin.projects.store');
+        Route::get('/{id}', [ProjectController::class, 'show'])->name('admin.projects.show');
+        Route::get('/{id}/edit', [ProjectController::class, 'edit'])->name('admin.projects.edit');
+        Route::put('/{id}', [ProjectController::class, 'update'])->name('admin.projects.update');
+        Route::post('/{id}/calculate-tev', [ProjectController::class, 'calculateTEV'])->name('admin.projects.calculateTEV');
+        Route::get('/{id}/export', [ProjectController::class, 'export'])->name('admin.projects.export');
+    });
+
+    // Benefits & Costs
+    Route::prefix('/admin/projects/{projectId}')->group(function () {
+        Route::get('/benefits/create', [BenefitController::class, 'create'])->name('admin.benefits.create');
+        Route::post('/benefits', [BenefitController::class, 'store'])->name('admin.benefits.store');
+        Route::get('/benefits/{benefitId}/edit', [BenefitController::class, 'edit'])->name('admin.benefits.edit');
+        Route::put('/benefits/{benefitId}', [BenefitController::class, 'update'])->name('admin.benefits.update');
+        Route::delete('/benefits/{benefitId}', [BenefitController::class, 'destroy'])->name('admin.benefits.destroy');
+
+        Route::get('/costs/create', [CostController::class, 'create'])->name('admin.costs.create');
+        Route::post('/costs', [CostController::class, 'store'])->name('admin.costs.store');
+        Route::get('/costs/{costId}/edit', [CostController::class, 'edit'])->name('admin.costs.edit');
+        Route::put('/costs/{costId}', [CostController::class, 'update'])->name('admin.costs.update');
+        Route::delete('/costs/{costId}', [CostController::class, 'destroy'])->name('admin.costs.destroy');
+    });
+
+    // EOP Module
+    Route::prefix('/admin/projects/{projectId}/modules/eop')->group(function () {
+        Route::get('/', [EopController::class, 'index'])->name('admin.modules.eop.index');
+        Route::get('/create', [EopController::class, 'create'])->name('admin.modules.eop.create');
+        Route::post('/', [EopController::class, 'store'])->name('admin.modules.eop.store');
+        Route::get('/{eopId}/edit', [EopController::class, 'edit'])->name('admin.modules.eop.edit');
+        Route::put('/{eopId}', [EopController::class, 'update'])->name('admin.modules.eop.update');
+        Route::delete('/{eopId}', [EopController::class, 'destroy'])->name('admin.modules.eop.destroy');
+    });
+
+    // TCM Module
+    Route::prefix('/admin/projects/{projectId}/modules/tcm')->group(function () {
+        Route::get('/', [TcmController::class, 'index'])->name('admin.modules.tcm.index');
+        Route::get('/create', [TcmController::class, 'create'])->name('admin.modules.tcm.create');
+        Route::post('/', [TcmController::class, 'store'])->name('admin.modules.tcm.store');
+        Route::get('/{tcmId}/edit', [TcmController::class, 'edit'])->name('admin.modules.tcm.edit');
+        Route::put('/{tcmId}', [TcmController::class, 'update'])->name('admin.modules.tcm.update');
+        Route::delete('/{tcmId}', [TcmController::class, 'destroy'])->name('admin.modules.tcm.destroy');
+    });
+
+    // CVM Module
+    Route::prefix('/admin/projects/{projectId}/modules/cvm')->group(function () {
+        Route::get('/', [CvmController::class, 'index'])->name('admin.modules.cvm.index');
+        Route::get('/create', [CvmController::class, 'create'])->name('admin.modules.cvm.create');
+        Route::post('/', [CvmController::class, 'store'])->name('admin.modules.cvm.store');
+        Route::get('/{cvmId}/edit', [CvmController::class, 'edit'])->name('admin.modules.cvm.edit');
+        Route::put('/{cvmId}', [CvmController::class, 'update'])->name('admin.modules.cvm.update');
+        Route::delete('/{cvmId}', [CvmController::class, 'destroy'])->name('admin.modules.cvm.destroy');
+    });
+
+    // User Management (Admin only)
+    Route::prefix('/admin/users')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('admin.users.index');
+        Route::get('/create', [UserController::class, 'create'])->name('admin.users.create');
+        Route::post('/', [UserController::class, 'store'])->name('admin.users.store');
+        Route::get('/{id}/edit', [UserController::class, 'edit'])->name('admin.users.edit');
+        Route::put('/{id}', [UserController::class, 'update'])->name('admin.users.update');
+        Route::delete('/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
+    });
+
+    // Audit Log
+    Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('admin.audit.index');
+
+    // Master Data
+    Route::prefix('/admin/master-data')->group(function () {
+        // Market Prices
+        Route::get('/prices', [MarketPriceController::class, 'index'])->name('admin.master.prices.index');
+        Route::get('/prices/create', [MarketPriceController::class, 'create'])->name('admin.master.prices.create');
+        Route::post('/prices', [MarketPriceController::class, 'store'])->name('admin.master.prices.store');
+        Route::get('/prices/{id}/edit', [MarketPriceController::class, 'edit'])->name('admin.master.prices.edit');
+        Route::put('/prices/{id}', [MarketPriceController::class, 'update'])->name('admin.master.prices.update');
+        Route::delete('/prices/{id}', [MarketPriceController::class, 'destroy'])->name('admin.master.prices.destroy');
+
+        // Environmental Coefficients
+        Route::get('/coefficients', [EnvironmentalCoefficientController::class, 'index'])->name('admin.master.coefficients.index');
+        Route::get('/coefficients/create', [EnvironmentalCoefficientController::class, 'create'])->name('admin.master.coefficients.create');
+        Route::post('/coefficients', [EnvironmentalCoefficientController::class, 'store'])->name('admin.master.coefficients.store');
+        Route::get('/coefficients/{id}/edit', [EnvironmentalCoefficientController::class, 'edit'])->name('admin.master.coefficients.edit');
+        Route::put('/coefficients/{id}', [EnvironmentalCoefficientController::class, 'update'])->name('admin.master.coefficients.update');
+        Route::delete('/coefficients/{id}', [EnvironmentalCoefficientController::class, 'destroy'])->name('admin.master.coefficients.destroy');
+    });
+
+    // Sensitivity Analysis
+    Route::get('/admin/sensitivity', [SensitivityController::class, 'index'])->name('admin.sensitivity.index');
+    Route::get('/admin/sensitivity/simulate', [SensitivityController::class, 'simulate'])->name('admin.sensitivity.simulate');
+});
