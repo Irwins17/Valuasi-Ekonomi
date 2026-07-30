@@ -5,18 +5,20 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\EnvironmentalCoefficient;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class EnvironmentalCoefficientController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $coefficients = EnvironmentalCoefficient::latest()->paginate(15);
-        return view('admin.master-data.coefficients.index', ['coefficients' => $coefficients]);
+        return Inertia::render('Admin/MasterData/Coefficients/Index', ['coefficients' => $coefficients]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        return view('admin.master-data.coefficients.create');
+        return Inertia::render('Admin/MasterData/Coefficients/Create');
     }
 
     public function store(Request $request)
@@ -36,10 +38,10 @@ class EnvironmentalCoefficientController extends Controller
         return redirect()->route('admin.master.coefficients.index')->with('success', 'Koefisien berhasil ditambahkan');
     }
 
-    public function edit($id)
+    public function edit($id): Response
     {
         $coefficient = EnvironmentalCoefficient::findOrFail($id);
-        return view('admin.master-data.coefficients.edit', ['coefficient' => $coefficient]);
+        return Inertia::render('Admin/MasterData/Coefficients/Edit', ['coefficient' => $coefficient]);
     }
 
     public function update(Request $request, $id)

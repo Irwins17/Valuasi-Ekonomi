@@ -8,21 +8,23 @@ use App\Models\EopData;
 use App\Models\MarketPrice;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class EopController extends Controller
 {
-    public function index($projectId)
+    public function index($projectId): Response
     {
         $project = Project::findOrFail($projectId);
         $eopData = $project->eopData()->paginate(10);
 
-        return view('admin.modules.eop.index', [
+        return Inertia::render('Admin/Modules/Eop/Index', [
             'project' => $project,
             'eopData' => $eopData,
         ]);
     }
 
-    public function create($projectId)
+    public function create($projectId): Response
     {
         $project = Project::findOrFail($projectId);
         // Referensi harga untuk proyek ini: harga khusus proyek + harga umum/global
@@ -31,7 +33,7 @@ class EopController extends Controller
             ->get()
             ->groupBy('commodity_name');
 
-        return view('admin.modules.eop.create', [
+        return Inertia::render('Admin/Modules/Eop/Create', [
             'project' => $project,
             'marketPrices' => $marketPrices,
         ]);
@@ -74,7 +76,7 @@ class EopController extends Controller
             ->with('success', 'Data EOP berhasil ditambahkan');
     }
 
-    public function edit($projectId, $eopId)
+    public function edit($projectId, $eopId): Response
     {
         $project = Project::findOrFail($projectId);
         $eopData = EopData::findOrFail($eopId);
@@ -82,7 +84,7 @@ class EopController extends Controller
             ->forProject($project->id)
             ->get();
 
-        return view('admin.modules.eop.edit', [
+        return Inertia::render('Admin/Modules/Eop/Edit', [
             'project' => $project,
             'eopData' => $eopData,
             'marketPrices' => $marketPrices,

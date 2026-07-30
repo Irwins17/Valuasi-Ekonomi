@@ -6,13 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Cost;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CostController extends Controller
 {
-    public function create($projectId)
+    public function create($projectId): Response
     {
         $project = Project::findOrFail($projectId);
-        return view('admin.costs.create', ['project' => $project]);
+        return Inertia::render('Admin/Costs/Create', ['project' => $project]);
     }
 
     public function store(Request $request, $projectId)
@@ -37,11 +39,11 @@ class CostController extends Controller
         return redirect()->route('admin.projects.show', $projectId)->with('success', 'Cost berhasil ditambahkan');
     }
 
-    public function edit($projectId, $costId)
+    public function edit($projectId, $costId): Response
     {
         $project = Project::findOrFail($projectId);
         $cost = Cost::findOrFail($costId);
-        return view('admin.costs.edit', ['project' => $project, 'cost' => $cost]);
+        return Inertia::render('Admin/Costs/Edit', ['project' => $project, 'cost' => $cost]);
     }
 
     public function update(Request $request, $projectId, $costId)
@@ -53,6 +55,8 @@ class CostController extends Controller
             'description' => 'required|string',
             'value' => 'required|numeric|min:0',
             'payment_type' => 'nullable|string',
+            'year_applied' => 'nullable|integer',
+            'calculation_notes' => 'nullable|string',
         ]);
         $cost->update($validated);
         return redirect()->route('admin.projects.show', $projectId)->with('success', 'Cost berhasil diperbarui');

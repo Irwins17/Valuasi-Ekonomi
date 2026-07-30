@@ -3,12 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
+use Inertia\Inertia;
 
 class AuthController extends Controller
 {
@@ -17,7 +14,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
-        return view('auth.login');
+        return Inertia::render('Auth/Login');
     }
 
     public function login(Request $request)
@@ -30,10 +27,10 @@ class AuthController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $user = Auth::user();
             $user->update(['last_login_at' => now()]);
-            
+
             $request->session()->regenerate();
-            
-            return redirect('/admin/dashboard');
+
+            return redirect()->route('dashboard');
         }
 
         return back()->withErrors([

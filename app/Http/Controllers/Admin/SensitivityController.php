@@ -5,17 +5,19 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class SensitivityController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $projects = Project::where('status', '!=', 'draft')
             ->whereHas('benefits')
             ->whereHas('costs')
-            ->get();
+            ->get(['id', 'name']);
 
-        return view('admin.sensitivity.index', ['projects' => $projects]);
+        return Inertia::render('Admin/Sensitivity/Index', ['projects' => $projects]);
     }
 
     public function simulate(Request $request)

@@ -27,11 +27,10 @@ class TcmData extends Model
         'consumer_surplus'   => 'decimal:2',
     ];
 
-    /**
-     * Use bootTcmData() naming convention to avoid boot() conflict with traits.
-     */
-    protected static function bootTcmData(): void
+    protected static function boot(): void
     {
+        parent::boot();
+
         static::saving(function ($model) {
             $model->total_travel_cost = $model->transportation_cost + $model->time_cost;
             $model->consumer_surplus  = max(0, $model->total_travel_cost * $model->visit_frequency);

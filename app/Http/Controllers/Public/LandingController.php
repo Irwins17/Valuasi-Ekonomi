@@ -5,11 +5,12 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use Illuminate\Support\Facades\DB;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class LandingController extends Controller
 {
-    public function index(): View
+    public function index(): Response
     {
         $publishedProjects = Project::where('status', 'published')->count();
         $totalTEV = Project::where('status', 'published')->sum('tev');
@@ -23,7 +24,7 @@ class LandingController extends Controller
             ->select('id', 'name', 'location', 'latitude', 'longitude', 'tev')
             ->get();
 
-        return view('public.landing', [
+        return Inertia::render('Public/Landing', [
             'publishedProjects' => $publishedProjects,
             'totalTEV' => $totalTEV ?? 0,
             'totalBenefits' => $totalBenefits ?? 0,
@@ -32,7 +33,7 @@ class LandingController extends Controller
         ]);
     }
 
-    public function dashboard(): View
+    public function dashboard(): Response
     {
         $projects = Project::where('status', 'published')
             ->with('benefits', 'costs')
@@ -52,19 +53,19 @@ class LandingController extends Controller
             ->select('benefits.method_used', DB::raw('count(*) as count'))
             ->get();
 
-        return view('public.dashboard', [
+        return Inertia::render('Public/Dashboard', [
             'projects' => $projects,
             'benefits' => $benefits,
             'methodDistribution' => $methodDistribution,
         ]);
     }
 
-    public function glossary(): View
+    public function glossary(): Response
     {
-        return view('public.glossary');
+        return Inertia::render('Public/Glossary');
     }
 
-    public function projectDetail($id): View
+    public function projectDetail($id): Response
     {
         $project = Project::findOrFail($id);
 
@@ -75,7 +76,7 @@ class LandingController extends Controller
         $benefits = $project->benefits()->get();
         $costs = $project->costs()->get();
 
-        return view('public.project-detail', [
+        return Inertia::render('Public/ProjectDetail', [
             'project' => $project,
             'benefits' => $benefits,
             'costs' => $costs,

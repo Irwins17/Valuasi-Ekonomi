@@ -3,25 +3,26 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Benefit;
-use App\Models\Cost;
 use App\Models\Project;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
+use Spatie\LaravelPdf\Facades\Pdf;
 
 class ProjectController extends Controller
 {
-    public function index(): View
+    public function index(): Response
     {
         $projects = Project::with('creator', 'updater')
             ->paginate(10);
 
-        return view('admin.projects.index', ['projects' => $projects]);
+        return Inertia::render('Admin/Projects/Index', ['projects' => $projects]);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('admin.projects.create');
+        return Inertia::render('Admin/Projects/Create');
     }
 
     public function store(Request $request)
@@ -45,21 +46,21 @@ class ProjectController extends Controller
             ->with('success', 'Project berhasil dibuat');
     }
 
-    public function show($id): View
+    public function show($id): Response
     {
-        $project = Project::with(['benefits', 'costs', 'eopData', 'tcmData', 'cvmData'])->findOrFail($id);
+        $project = Project::withCount(['eopData', 'tcmData', 'cvmData'])->findOrFail($id);
 
-        return view('admin.projects.show', [
+        return Inertia::render('Admin/Projects/Show', [
             'project' => $project,
             'benefits' => $project->benefits()->paginate(5),
             'costs' => $project->costs()->paginate(5),
         ]);
     }
 
-    public function edit($id): View
+    public function edit($id): Response
     {
         $project = Project::findOrFail($id);
-        return view('admin.projects.edit', ['project' => $project]);
+        return Inertia::render('Admin/Projects/Edit', ['project' => $project]);
     }
 
     public function update(Request $request, $id)
@@ -96,10 +97,8 @@ class ProjectController extends Controller
     {
         $project = Project::with(['benefits', 'costs'])->findOrFail($id);
 
-        $html = view('admin.projects.pdf', ['project' => $project])->render();
-
-        return response($html)
-            ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'attachment; filename="' . $project->name . '.pdf"');
+        return Pdf::view('pdf.projects.export', ['project' => $project])
+            ->format('a4')
+            ->download(Str::slug("{$project->code}-{$project->name}"));
     }
 }

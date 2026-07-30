@@ -7,19 +7,21 @@ use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(): Response
     {
         $users = User::with('role')->paginate(15);
-        return view('admin.users.index', ['users' => $users]);
+        return Inertia::render('Admin/Users/Index', ['users' => $users]);
     }
 
-    public function create()
+    public function create(): Response
     {
         $roles = Role::all();
-        return view('admin.users.create', ['roles' => $roles]);
+        return Inertia::render('Admin/Users/Create', ['roles' => $roles]);
     }
 
     public function store(Request $request)
@@ -43,11 +45,11 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'Pengguna berhasil ditambahkan');
     }
 
-    public function edit($id)
+    public function edit($id): Response
     {
         $user = User::findOrFail($id);
         $roles = Role::all();
-        return view('admin.users.edit', ['user' => $user, 'roles' => $roles]);
+        return Inertia::render('Admin/Users/Edit', ['user' => $user, 'roles' => $roles]);
     }
 
     public function update(Request $request, $id)
@@ -63,7 +65,7 @@ class UserController extends Controller
         ]);
 
         if ($request->filled('password')) {
-            $request->validate(['password' => 'min:6']);
+            $request->validate(['password' => 'min:6|confirmed']);
             $validated['password'] = Hash::make($request->password);
         }
 

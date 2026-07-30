@@ -27,12 +27,10 @@ class EopData extends Model
         'total_value'        => 'decimal:2',
     ];
 
-    /**
-     * Use bootEopData() naming convention so it doesn't conflict with
-     * parent::boot() or the Auditable::bootAuditable() trait.
-     */
-    protected static function bootEopData(): void
+    protected static function boot(): void
     {
+        parent::boot();
+
         static::saving(function ($model) {
             $model->production_change = $model->production_after - $model->production_before;
             $model->total_value       = $model->production_change * $model->market_price;

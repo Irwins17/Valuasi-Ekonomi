@@ -27,25 +27,36 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// Admin Routes (Protected)
+// Admin Routes (Protected) — RBAC matrix: admin has full access everywhere;
+// surveyor can view + enter field data (Projects view, EOP/TCM/CVM manage);
+// analyst can view + run sensitivity analysis (verification/reporting).
 Route::middleware(['auth'])->group(function () {
-    // Dashboard
+    // Dashboard — available to every authenticated role
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Projects
+    // Projects — viewable by all roles, mutated by admin only.
+    // NOTE: static segments (/create) must stay registered before the /{id}
+    // wildcard, or Laravel matches "create" as $id and 404s on findOrFail().
     Route::prefix('/admin/projects')->group(function () {
         Route::get('/', [ProjectController::class, 'index'])->name('admin.projects.index');
-        Route::get('/create', [ProjectController::class, 'create'])->name('admin.projects.create');
-        Route::post('/', [ProjectController::class, 'store'])->name('admin.projects.store');
+
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/create', [ProjectController::class, 'create'])->name('admin.projects.create');
+            Route::post('/', [ProjectController::class, 'store'])->name('admin.projects.store');
+        });
+
         Route::get('/{id}', [ProjectController::class, 'show'])->name('admin.projects.show');
-        Route::get('/{id}/edit', [ProjectController::class, 'edit'])->name('admin.projects.edit');
-        Route::put('/{id}', [ProjectController::class, 'update'])->name('admin.projects.update');
-        Route::post('/{id}/calculate-tev', [ProjectController::class, 'calculateTEV'])->name('admin.projects.calculateTEV');
-        Route::get('/{id}/export', [ProjectController::class, 'export'])->name('admin.projects.export');
+
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/{id}/edit', [ProjectController::class, 'edit'])->name('admin.projects.edit');
+            Route::put('/{id}', [ProjectController::class, 'update'])->name('admin.projects.update');
+            Route::post('/{id}/calculate-tev', [ProjectController::class, 'calculateTEV'])->name('admin.projects.calculateTEV');
+            Route::get('/{id}/export', [ProjectController::class, 'export'])->name('admin.projects.export');
+        });
     });
 
-    // Benefits & Costs
-    Route::prefix('/admin/projects/{projectId}')->group(function () {
+    // Benefits & Costs — admin only (manual valuation-result entry, not field data)
+    Route::middleware(['role:admin'])->prefix('/admin/projects/{projectId}')->group(function () {
         Route::get('/benefits/create', [BenefitController::class, 'create'])->name('admin.benefits.create');
         Route::post('/benefits', [BenefitController::class, 'store'])->name('admin.benefits.store');
         Route::get('/benefits/{benefitId}/edit', [BenefitController::class, 'edit'])->name('admin.benefits.edit');
@@ -59,38 +70,51 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/costs/{costId}', [CostController::class, 'destroy'])->name('admin.costs.destroy');
     });
 
-    // EOP Module
+    // EOP Module — viewable by all roles, entered by admin + surveyor
     Route::prefix('/admin/projects/{projectId}/modules/eop')->group(function () {
         Route::get('/', [EopController::class, 'index'])->name('admin.modules.eop.index');
-        Route::get('/create', [EopController::class, 'create'])->name('admin.modules.eop.create');
-        Route::post('/', [EopController::class, 'store'])->name('admin.modules.eop.store');
-        Route::get('/{eopId}/edit', [EopController::class, 'edit'])->name('admin.modules.eop.edit');
-        Route::put('/{eopId}', [EopController::class, 'update'])->name('admin.modules.eop.update');
-        Route::delete('/{eopId}', [EopController::class, 'destroy'])->name('admin.modules.eop.destroy');
+
+        Route::middleware(['role:admin,surveyor'])->group(function () {
+            Route::get('/create', [EopController::class, 'create'])->name('admin.modules.eop.create');
+            Route::post('/', [EopController::class, 'store'])->name('admin.modules.eop.store');
+            Route::get('/{eopId}/edit', [EopController::class, 'edit'])->name('admin.modules.eop.edit');
+            Route::put('/{eopId}', [EopController::class, 'update'])->name('admin.modules.eop.update');
+            Route::delete('/{eopId}', [EopController::class, 'destroy'])->name('admin.modules.eop.destroy');
+        });
     });
 
-    // TCM Module
+    // TCM Module — viewable by all roles, entered by admin + surveyor
     Route::prefix('/admin/projects/{projectId}/modules/tcm')->group(function () {
         Route::get('/', [TcmController::class, 'index'])->name('admin.modules.tcm.index');
-        Route::get('/create', [TcmController::class, 'create'])->name('admin.modules.tcm.create');
-        Route::post('/', [TcmController::class, 'store'])->name('admin.modules.tcm.store');
-        Route::get('/{tcmId}/edit', [TcmController::class, 'edit'])->name('admin.modules.tcm.edit');
-        Route::put('/{tcmId}', [TcmController::class, 'update'])->name('admin.modules.tcm.update');
-        Route::delete('/{tcmId}', [TcmController::class, 'destroy'])->name('admin.modules.tcm.destroy');
+
+        Route::middleware(['role:admin,surveyor'])->group(function () {
+            Route::get('/create', [TcmController::class, 'create'])->name('admin.modules.tcm.create');
+            Route::post('/', [TcmController::class, 'store'])->name('admin.modules.tcm.store');
+            Route::get('/export', [TcmController::class, 'export'])->name('admin.modules.tcm.export');
+            Route::post('/import', [TcmController::class, 'import'])->name('admin.modules.tcm.import');
+            Route::get('/{tcmId}/edit', [TcmController::class, 'edit'])->name('admin.modules.tcm.edit');
+            Route::put('/{tcmId}', [TcmController::class, 'update'])->name('admin.modules.tcm.update');
+            Route::delete('/{tcmId}', [TcmController::class, 'destroy'])->name('admin.modules.tcm.destroy');
+        });
     });
 
-    // CVM Module
+    // CVM Module — viewable by all roles, entered by admin + surveyor
     Route::prefix('/admin/projects/{projectId}/modules/cvm')->group(function () {
         Route::get('/', [CvmController::class, 'index'])->name('admin.modules.cvm.index');
-        Route::get('/create', [CvmController::class, 'create'])->name('admin.modules.cvm.create');
-        Route::post('/', [CvmController::class, 'store'])->name('admin.modules.cvm.store');
-        Route::get('/{cvmId}/edit', [CvmController::class, 'edit'])->name('admin.modules.cvm.edit');
-        Route::put('/{cvmId}', [CvmController::class, 'update'])->name('admin.modules.cvm.update');
-        Route::delete('/{cvmId}', [CvmController::class, 'destroy'])->name('admin.modules.cvm.destroy');
+
+        Route::middleware(['role:admin,surveyor'])->group(function () {
+            Route::get('/create', [CvmController::class, 'create'])->name('admin.modules.cvm.create');
+            Route::post('/', [CvmController::class, 'store'])->name('admin.modules.cvm.store');
+            Route::get('/export', [CvmController::class, 'export'])->name('admin.modules.cvm.export');
+            Route::post('/import', [CvmController::class, 'import'])->name('admin.modules.cvm.import');
+            Route::get('/{cvmId}/edit', [CvmController::class, 'edit'])->name('admin.modules.cvm.edit');
+            Route::put('/{cvmId}', [CvmController::class, 'update'])->name('admin.modules.cvm.update');
+            Route::delete('/{cvmId}', [CvmController::class, 'destroy'])->name('admin.modules.cvm.destroy');
+        });
     });
 
-    // User Management (Admin only)
-    Route::prefix('/admin/users')->group(function () {
+    // User Management — admin only
+    Route::middleware(['role:admin'])->prefix('/admin/users')->group(function () {
         Route::get('/', [UserController::class, 'index'])->name('admin.users.index');
         Route::get('/create', [UserController::class, 'create'])->name('admin.users.create');
         Route::post('/', [UserController::class, 'store'])->name('admin.users.store');
@@ -99,11 +123,13 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/{id}', [UserController::class, 'destroy'])->name('admin.users.destroy');
     });
 
-    // Audit Log
-    Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('admin.audit.index');
+    // Audit Log — admin only
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/admin/audit-logs', [AuditLogController::class, 'index'])->name('admin.audit.index');
+    });
 
-    // Master Data
-    Route::prefix('/admin/master-data')->group(function () {
+    // Master Data — admin only
+    Route::middleware(['role:admin'])->prefix('/admin/master-data')->group(function () {
         // Market Prices
         Route::get('/prices', [MarketPriceController::class, 'index'])->name('admin.master.prices.index');
         Route::get('/prices/create', [MarketPriceController::class, 'create'])->name('admin.master.prices.create');
@@ -121,7 +147,9 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/coefficients/{id}', [EnvironmentalCoefficientController::class, 'destroy'])->name('admin.master.coefficients.destroy');
     });
 
-    // Sensitivity Analysis
-    Route::get('/admin/sensitivity', [SensitivityController::class, 'index'])->name('admin.sensitivity.index');
-    Route::get('/admin/sensitivity/simulate', [SensitivityController::class, 'simulate'])->name('admin.sensitivity.simulate');
+    // Sensitivity Analysis — admin + analyst only
+    Route::middleware(['role:admin,analyst'])->group(function () {
+        Route::get('/admin/sensitivity', [SensitivityController::class, 'index'])->name('admin.sensitivity.index');
+        Route::get('/admin/sensitivity/simulate', [SensitivityController::class, 'simulate'])->name('admin.sensitivity.simulate');
+    });
 });

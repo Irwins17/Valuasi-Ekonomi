@@ -36,8 +36,8 @@ class AuditLog extends Model
             'model_type' => $modelType,
             'model_id' => $modelId,
             'table_name' => $tableName,
-            'old_values' => $oldValues ? json_encode($oldValues) : null,
-            'new_values' => $newValues ? json_encode($newValues) : null,
+            'old_values' => $oldValues,
+            'new_values' => $newValues,
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);

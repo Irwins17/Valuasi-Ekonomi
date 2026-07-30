@@ -17,6 +17,12 @@ class MarketPrice extends Model
         'year' => 'integer',
     ];
 
+    /**
+     * Needed so `is_global` reaches the React frontend's JSON props
+     * (Blade could call the accessor directly; JSON serialization can't).
+     */
+    protected $appends = ['is_global'];
+
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');

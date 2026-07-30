@@ -6,10 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\MarketPrice;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class MarketPriceController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         // scope: 'all' (default) | 'global' (umum saja) | id proyek tertentu
         $scope = $request->query('scope', 'all');
@@ -21,16 +23,16 @@ class MarketPriceController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('admin.master-data.market-prices.index', [
+        return Inertia::render('Admin/MasterData/MarketPrices/Index', [
             'prices' => $prices,
             'projects' => Project::orderBy('name')->get(['id', 'name', 'code']),
             'scope' => $scope,
         ]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        return view('admin.master-data.market-prices.create', [
+        return Inertia::render('Admin/MasterData/MarketPrices/Create', [
             'projects' => Project::orderBy('name')->get(['id', 'name', 'code']),
         ]);
     }
@@ -56,11 +58,11 @@ class MarketPriceController extends Controller
             ->with('success', 'Harga pasar berhasil ditambahkan');
     }
 
-    public function edit($id)
+    public function edit($id): Response
     {
         $price = MarketPrice::findOrFail($id);
 
-        return view('admin.master-data.market-prices.edit', [
+        return Inertia::render('Admin/MasterData/MarketPrices/Edit', [
             'price' => $price,
             'projects' => Project::orderBy('name')->get(['id', 'name', 'code']),
         ]);
@@ -75,7 +77,7 @@ class MarketPriceController extends Controller
             'commodity_name' => 'required|string',
             'unit' => 'required|string',
             'price' => 'required|numeric|min:0',
-            'year' => 'required|integer',
+            'year' => 'required|integer|min:2000',
             'source' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);

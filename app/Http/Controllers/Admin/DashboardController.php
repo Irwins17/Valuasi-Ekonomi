@@ -8,11 +8,12 @@ use App\Models\EopData;
 use App\Models\Project;
 use App\Models\TcmData;
 use App\Models\User;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(): View
+    public function index(): Response
     {
         $totalProjects = Project::count();
         $publishedProjects = Project::where('status', 'published')->count();
@@ -30,7 +31,7 @@ class DashboardController extends Controller
 
         $monthlyStats = $this->getMonthlyStats();
 
-        return view('admin.dashboard', [
+        return Inertia::render('Admin/Dashboard', [
             'totalProjects' => $totalProjects,
             'publishedProjects' => $publishedProjects,
             'inProgressProjects' => $inProgressProjects,

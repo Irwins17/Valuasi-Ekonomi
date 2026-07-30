@@ -6,13 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Benefit;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class BenefitController extends Controller
 {
-    public function create($projectId)
+    public function create($projectId): Response
     {
         $project = Project::findOrFail($projectId);
-        return view('admin.benefits.create', ['project' => $project]);
+        return Inertia::render('Admin/Benefits/Create', ['project' => $project]);
     }
 
     public function store(Request $request, $projectId)
@@ -38,11 +40,11 @@ class BenefitController extends Controller
         return redirect()->route('admin.projects.show', $projectId)->with('success', 'Benefit berhasil ditambahkan');
     }
 
-    public function edit($projectId, $benefitId)
+    public function edit($projectId, $benefitId): Response
     {
         $project = Project::findOrFail($projectId);
         $benefit = Benefit::findOrFail($benefitId);
-        return view('admin.benefits.edit', ['project' => $project, 'benefit' => $benefit]);
+        return Inertia::render('Admin/Benefits/Edit', ['project' => $project, 'benefit' => $benefit]);
     }
 
     public function update(Request $request, $projectId, $benefitId)
@@ -55,6 +57,8 @@ class BenefitController extends Controller
             'value' => 'required|numeric|min:0',
             'method_used' => 'nullable|string',
             'data_source' => 'required|in:eop,tcm,cvm,manual,literature',
+            'sample_size' => 'nullable|integer',
+            'calculation_notes' => 'nullable|string',
         ]);
         $benefit->update($validated);
         return redirect()->route('admin.projects.show', $projectId)->with('success', 'Benefit berhasil diperbarui');

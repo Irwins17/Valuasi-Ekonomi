@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AuditLogController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $query = AuditLog::with('user')->latest();
 
@@ -22,7 +24,11 @@ class AuditLogController extends Controller
             $query->where('table_name', $request->table_name);
         }
 
-        $logs = $query->paginate(20);
-        return view('admin.audit-logs.index', ['logs' => $logs]);
+        $logs = $query->paginate(20)->withQueryString();
+
+        return Inertia::render('Admin/AuditLogs/Index', [
+            'logs' => $logs,
+            'filters' => $request->only(['event', 'table_name']),
+        ]);
     }
 }
