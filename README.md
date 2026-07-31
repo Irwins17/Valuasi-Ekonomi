@@ -51,11 +51,11 @@ Aplikasi web untuk melakukan **valuasi ekonomi (economic valuation)** terhadap m
 - **PHPUnit** — automated test suite
 
 ### Frontend
-- **[Inertia.js](https://inertiajs.com)** + **[React 19](https://react.dev)** — antarmuka SPA tanpa perlu membangun REST API terpisah
-- **[Vite 7](https://vitejs.dev)** — build tool & dev server
-- **[Tailwind CSS 4](https://tailwindcss.com)** + design system CSS kustom
-- **Chart.js** & **Leaflet** (paket npm, bukan CDN) — grafik dan peta interaktif
-- **Ziggy** — pemakaian named route Laravel (`route()`) langsung di JavaScript
+- **[Inertia.js](https://inertiajs.com)** + **[React 19](https://react.dev)** 
+- **[Vite 7](https://vitejs.dev)** 
+- **[Tailwind CSS 4](https://tailwindcss.com)**
+- **Chart.js** & **Leaflet** 
+- **Ziggy** 
 
 ### Dev Tools
 - Laravel Pint (code style)
