@@ -46,9 +46,9 @@ Aplikasi web untuk melakukan **valuasi ekonomi (economic valuation)** terhadap m
 ### Backend
 - **[Laravel 13](https://laravel.com)** (PHP ^8.3)
 - **Database**: SQLite (default), dapat dikonfigurasi ke MySQL/PostgreSQL
-- **[spatie/laravel-pdf](https://github.com/spatie/laravel-pdf)** — ekspor laporan proyek ke PDF (render via headless Chrome/Browsershot)
-- **[maatwebsite/excel](https://github.com/SpartnerNL/Laravel-Excel)** — import/export data survei TCM & CVM
-- **PHPUnit** — automated test suite
+- **[spatie/laravel-pdf](https://github.com/spatie/laravel-pdf)** 
+- **[maatwebsite/excel](https://github.com/SpartnerNL/Laravel-Excel)** 
+- **PHPUnit** 
 
 ### Frontend
 - **[Inertia.js](https://inertiajs.com)** + **[React 19](https://react.dev)** 
