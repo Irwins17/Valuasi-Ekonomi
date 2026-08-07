@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, usePage, router } from '@inertiajs/react';
+import ErrorBoundary from '../Components/ui/ErrorBoundary';
 
 function NavLink({ href, active, children }) {
     return (
@@ -154,7 +155,7 @@ export default function AdminLayout({ title = 'Dashboard', subtitle, children })
                     {flash?.success && <FlashAlert message={flash.success} type="success" />}
                     {flash?.error && <FlashAlert message={flash.error} type="danger" />}
 
-                    {children}
+                    <ErrorBoundary>{children}</ErrorBoundary>
                 </div>
             </div>
         </div>

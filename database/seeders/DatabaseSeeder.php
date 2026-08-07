@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleAndUserSeeder::class,
             SampleDataSeeder::class,
+            RegionalValuationSeeder::class,
+            PulauObiEcosystemSeeder::class,
         ]);
     }
 }

@@ -162,4 +162,69 @@ class ProjectCrudTest extends TestCase
         $this->assertEquals(1500, (float) $project->tev);
         $this->assertEquals(4, (float) $project->bcr);
     }
+
+    public function test_destroy_soft_deletes_project(): void
+    {
+        $user = $this->admin();
+        $project = Project::create([
+            'code' => 'PRJ-006', 'name' => 'Proyek F', 'location' => 'Riau',
+            'status' => 'draft', 'created_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->delete(route('admin.projects.destroy', $project->id))
+            ->assertRedirect(route('admin.projects.index'));
+
+        $this->assertSoftDeleted('projects', ['id' => $project->id]);
+    }
+
+    /**
+     * A repeat delete — double click, a stale list still showing the row,
+     * the browser back button, a second tab — used to hit findOrFail() and
+     * answer a bare 404 page.
+     */
+    public function test_destroy_on_already_deleted_project_redirects_instead_of_404(): void
+    {
+        $user = $this->admin();
+        $project = Project::create([
+            'code' => 'PRJ-007', 'name' => 'Proyek G', 'location' => 'Papua',
+            'status' => 'draft', 'created_by' => $user->id,
+        ]);
+        $project->delete();
+
+        $this->actingAs($user)
+            ->delete(route('admin.projects.destroy', $project->id))
+            ->assertRedirect(route('admin.projects.index'))
+            ->assertSessionHas('success');
+    }
+
+    public function test_destroy_on_unknown_project_redirects_instead_of_404(): void
+    {
+        $this->actingAs($this->admin())
+            ->delete(route('admin.projects.destroy', 999999))
+            ->assertRedirect(route('admin.projects.index'))
+            ->assertSessionHas('error');
+    }
+
+    public function test_destroy_is_forbidden_for_non_admin(): void
+    {
+        $surveyorRole = Role::create(['name' => 'Surveyor', 'slug' => 'surveyor']);
+        $surveyor = User::create([
+            'name' => 'Surveyor Test',
+            'email' => 'surveyor-test@valuasi.local',
+            'password' => 'password123',
+            'role_id' => $surveyorRole->id,
+            'is_active' => true,
+        ]);
+        $project = Project::create([
+            'code' => 'PRJ-008', 'name' => 'Proyek H', 'location' => 'Maluku',
+            'status' => 'draft', 'created_by' => $surveyor->id,
+        ]);
+
+        $this->actingAs($surveyor)
+            ->delete(route('admin.projects.destroy', $project->id))
+            ->assertForbidden();
+
+        $this->assertNotSoftDeleted('projects', ['id' => $project->id]);
+    }
 }

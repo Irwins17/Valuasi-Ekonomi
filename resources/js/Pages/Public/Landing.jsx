@@ -2,24 +2,16 @@ import { Head, Link } from '@inertiajs/react';
 import GuestLayout from '../../Layouts/GuestLayout';
 import RevealOnScroll from '../../Components/effects/RevealOnScroll';
 import CountUp from '../../Components/effects/CountUp';
-import LeafletMap from '../../Components/map/LeafletMap';
-import { toNumber, formatTriliun } from '../../lib/format';
+import ProvinceMap from '../../Components/map/ProvinceMap';
+import { toNumber } from '../../lib/format';
 
 const FEATURES = [
-    { icon: '📊', title: 'Dashboard Komprehensif', desc: 'Lihat breakdown lengkap manfaat, biaya, dan metodologi valuasi dari setiap proyek.', color: '#6366f1' },
+    { icon: '', title: 'Dashboard Komprehensif', desc: 'Lihat breakdown lengkap manfaat, biaya, dan metodologi valuasi dari setiap proyek.', color: '#6366f1' },
     { icon: '📍', title: 'Peta Valuasi Interaktif', desc: 'Visualisasi lokasi geografis dari semua proyek valuasi dengan data real-time.', color: '#06d6a0' },
-    { icon: '📚', title: 'Edukasi & Transparansi', desc: 'Pelajari metodologi TCM, CVM, dan EOP yang digunakan untuk menghasilkan angka-angka tersebut.', color: '#f72585' },
+    { icon: '', title: 'Edukasi & Transparansi', desc: 'Pelajari metodologi TCM, CVM, dan EOP yang digunakan untuk menghasilkan angka-angka tersebut.', color: '#f72585' },
 ];
 
 export default function Landing({ publishedProjects, totalTEV, totalBenefits, avgBCR, mapProjects }) {
-    const markers = (mapProjects || [])
-        .filter((p) => p.latitude && p.longitude)
-        .map((p) => ({
-            lat: toNumber(p.latitude),
-            lng: toNumber(p.longitude),
-            popupHtml: `<div style="font-family:Inter,sans-serif;"><strong style="font-size:14px;">${p.name}</strong><br><span style="font-size:12px;color:#64748b;">${p.location}</span><br><span style="font-size:13px;font-weight:600;color:#4f46e5;">TEV: Rp ${formatTriliun(p.tev)}T</span><br><a href="/project/${p.id}" style="font-size:12px;color:#06d6a0;">Lihat Detail →</a></div>`,
-        }));
-
     return (
         <GuestLayout>
             <Head title="Valuasi Ekonomi — Platform Transparansi Data" />
@@ -96,7 +88,7 @@ export default function Landing({ publishedProjects, totalTEV, totalBenefits, av
                         <p style={{ color: 'var(--text-secondary)', fontSize: 16, maxWidth: 600, margin: '0 auto' }}>Visualisasi lokasi geografis dari semua proyek valuasi ekonomi yang telah dipublikasikan.</p>
                     </div>
                     <div style={{ borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-xl)', border: '1px solid var(--border)' }}>
-                        <LeafletMap center={[-2.5, 118]} zoom={5} markers={markers} height={450} />
+                        <ProvinceMap projects={mapProjects} height={460} />
                     </div>
                 </div>
             </RevealOnScroll>

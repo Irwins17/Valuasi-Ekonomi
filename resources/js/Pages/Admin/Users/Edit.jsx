@@ -22,7 +22,7 @@ export default function Edit({ user, roles }) {
         <AdminLayout title="Edit Pengguna">
             <Head title="Edit Pengguna" />
 
-            <div style={{ maxWidth: 600, margin: '0 auto' }} className="animate-fade-up">
+            <div className="animate-fade-up">
                 <Link href={route('admin.users.index')} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, display: 'block', marginBottom: 16 }}>← Kembali</Link>
                 <div className="card">
                     <form onSubmit={submit}>

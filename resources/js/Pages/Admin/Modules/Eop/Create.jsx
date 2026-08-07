@@ -21,7 +21,7 @@ export default function Create({ project }) {
         <AdminLayout title="Tambah Data EOP">
             <Head title="Tambah Data EOP" />
 
-            <div style={{ maxWidth: 700, margin: '0 auto' }} className="animate-fade-up">
+            <div className="animate-fade-up">
                 <Link href={route('admin.modules.eop.index', project.id)} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, display: 'block', marginBottom: 16 }}>← Kembali</Link>
                 <div className="card">
                     <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Form Input EOP — {project.name}</h3>

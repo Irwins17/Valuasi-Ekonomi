@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import GuestLayout from '../../Layouts/GuestLayout';
 import DonutChart from '../../Components/charts/DonutChart';
 import BarChart from '../../Components/charts/BarChart';
+import ProvinceMap from '../../Components/map/ProvinceMap';
 import Pagination from '../../Components/ui/Pagination';
 import { toNumber, formatTriliun, formatRupiah } from '../../lib/format';
 
@@ -13,7 +14,7 @@ const CATEGORY_COLORS = [
 
 const METHOD_NAMES = { TCM: 'Travel Cost', CVM: 'Contingent Val.', EOP: 'Effect on Prod.' };
 
-export default function Dashboard({ projects, benefits, methodDistribution }) {
+export default function Dashboard({ projects, benefits, methodDistribution, mapProjects }) {
     const totalBen = benefits.reduce((sum, b) => sum + toNumber(b.total), 0);
 
     const donutData = CATEGORY_COLORS.map(([key]) => {
@@ -75,6 +76,12 @@ export default function Dashboard({ projects, benefits, methodDistribution }) {
                                 <BarChart labels={methodLabels} data={methodData} />
                             </div>
                         </div>
+                    </div>
+
+                    <div style={{ marginBottom: 8 }}>
+                        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Sebaran Proyek per Provinsi</h3>
+                        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 20 }}>Klik atau pilih provinsi untuk melihat proyek valuasi yang dipublikasikan di wilayah tersebut.</p>
+                        <ProvinceMap projects={mapProjects} height={440} />
                     </div>
                 </div>
             </section>

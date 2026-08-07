@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BenefitController;
+use App\Http\Controllers\Admin\BoundaryLookupController;
 use App\Http\Controllers\Admin\CostController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EnvironmentalCoefficientController;
@@ -45,11 +46,14 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/', [ProjectController::class, 'store'])->name('admin.projects.store');
         });
 
+        Route::middleware(['role:admin'])->get('/boundary-lookup', [BoundaryLookupController::class, 'lookup'])->name('admin.boundary.lookup');
+
         Route::get('/{id}', [ProjectController::class, 'show'])->name('admin.projects.show');
 
         Route::middleware(['role:admin'])->group(function () {
             Route::get('/{id}/edit', [ProjectController::class, 'edit'])->name('admin.projects.edit');
             Route::put('/{id}', [ProjectController::class, 'update'])->name('admin.projects.update');
+            Route::delete('/{id}', [ProjectController::class, 'destroy'])->name('admin.projects.destroy');
             Route::post('/{id}/calculate-tev', [ProjectController::class, 'calculateTEV'])->name('admin.projects.calculateTEV');
             Route::get('/{id}/export', [ProjectController::class, 'export'])->name('admin.projects.export');
         });

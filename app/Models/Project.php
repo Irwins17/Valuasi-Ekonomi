@@ -13,8 +13,8 @@ class Project extends Model
     use SoftDeletes, Auditable;
 
     protected $fillable = [
-        'code', 'name', 'description', 'location', 'latitude', 'longitude',
-        'created_by', 'updated_by', 'status', 'started_at', 'ended_at',
+        'code', 'name', 'description', 'location', 'province', 'latitude', 'longitude',
+        'boundary_geojson', 'created_by', 'updated_by', 'status', 'started_at', 'ended_at',
         'tev', 'total_benefits', 'total_costs', 'bcr', 'notes'
     ];
 
@@ -27,6 +27,7 @@ class Project extends Model
         'bcr' => 'decimal:4',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
+        'boundary_geojson' => 'array',
     ];
 
     public function creator(): BelongsTo
@@ -67,6 +68,11 @@ class Project extends Model
     public function marketPrices(): HasMany
     {
         return $this->hasMany(MarketPrice::class);
+    }
+
+    public function ecosystemValuationIndices(): HasMany
+    {
+        return $this->hasMany(EcosystemValuationIndex::class)->orderBy('index_number');
     }
 
     public function getTotalBenefits()

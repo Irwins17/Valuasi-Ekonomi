@@ -22,7 +22,7 @@ export default function Create() {
         <AdminLayout title="Tambah Koefisien">
             <Head title="Tambah Koefisien" />
 
-            <div style={{ maxWidth: 600, margin: '0 auto' }} className="animate-fade-up">
+            <div className="animate-fade-up">
                 <Link href={route('admin.master.coefficients.index')} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, display: 'block', marginBottom: 16 }}>← Kembali</Link>
                 <div className="card">
                     <form onSubmit={submit}>

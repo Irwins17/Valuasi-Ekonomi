@@ -22,7 +22,7 @@ export default function Edit({ price, projects }) {
         <AdminLayout title="Edit Harga Pasar">
             <Head title="Edit Harga Pasar" />
 
-            <div style={{ maxWidth: 600, margin: '0 auto' }} className="animate-fade-up">
+            <div className="animate-fade-up">
                 <Link href={route('admin.master.prices.index')} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, display: 'block', marginBottom: 16 }}>← Kembali</Link>
                 <div className="card">
                     <form onSubmit={submit}>

@@ -1,10 +1,134 @@
+import { useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import AdminLayout from '../../../Layouts/AdminLayout';
 import Pagination from '../../../Components/ui/Pagination';
 import ConfirmDeleteButton from '../../../Components/ui/ConfirmDeleteButton';
 import { formatTriliun, formatRupiah, toNumber } from '../../../lib/format';
 
-export default function Show({ project, benefits, costs }) {
+const SERVICE_CATEGORY_LABELS = {
+    provisioning: 'Provisioning',
+    regulating: 'Regulating',
+    supporting: 'Supporting',
+    cultural: 'Cultural',
+};
+
+function EcosystemValuationSection({ ecosystemIndices }) {
+    const [activeIndexNumber, setActiveIndexNumber] = useState(ecosystemIndices[0]?.index_number);
+    const [expandedLandCovers, setExpandedLandCovers] = useState({});
+
+    if (!ecosystemIndices?.length) return null;
+
+    const current = ecosystemIndices.find((i) => i.index_number === activeIndexNumber) || ecosystemIndices[0];
+
+    function toggleLandCover(id) {
+        setExpandedLandCovers((prev) => ({ ...prev, [id]: !prev[id] }));
+    }
+
+    return (
+        <div className="card" style={{ marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, flexWrap: 'wrap', gap: 8 }}>
+                <h3 style={{ fontSize: 15, fontWeight: 700 }}>Jasa Ekosistem — Valuasi Tutupan Lahan</h3>
+                <div style={{ display: 'flex', gap: 6 }}>
+                    {ecosystemIndices.map((idx) => (
+                        <button
+                            key={idx.index_number}
+                            type="button"
+                            className={`btn btn-sm ${idx.index_number === current.index_number ? 'btn-primary' : 'btn-outline'}`}
+                            onClick={() => setActiveIndexNumber(idx.index_number)}
+                        >
+                            Indeks {idx.index_number}
+                        </button>
+                    ))}
+                </div>
+            </div>
+            {current.notes && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 16 }}>{current.notes}</p>}
+
+            <div className="stat-card" style={{ textAlign: 'center', marginBottom: 20, maxWidth: 280 }}>
+                <div className="stat-label">TEV — {current.name}</div>
+                <div className="stat-value" style={{ fontSize: 20, color: 'var(--primary)' }}>Rp{formatTriliun(current.tev, 2)}T</div>
+            </div>
+
+            {current.land_covers.map((lc) => (
+                <div key={lc.id} style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <div>
+                            <strong>{lc.name}</strong>
+                            {lc.area_ha != null
+                                ? <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 8 }}>{formatRupiah(lc.area_ha, 2)} ha</span>
+                                : <span className="badge badge-warning" style={{ marginLeft: 8 }}>Data belum lengkap</span>}
+                        </div>
+                        <div style={{ fontWeight: 700 }}>Rp{formatRupiah(lc.total, 0)}</div>
+                    </div>
+                    {lc.notes && <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>{lc.notes}</p>}
+                    {lc.items.length > 0 && (
+                        <>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginTop: 10, fontSize: 12 }}>
+                                {Object.entries(lc.by_category).filter(([, v]) => Number(v) > 0).map(([cat, val]) => (
+                                    <div key={cat}>
+                                        <span style={{ color: 'var(--text-muted)' }}>{SERVICE_CATEGORY_LABELS[cat]}</span><br />
+                                        <strong>Rp{formatRupiah(val, 0)}</strong>
+                                    </div>
+                                ))}
+                            </div>
+                            <button type="button" className="btn btn-sm btn-ghost" style={{ marginTop: 10, padding: '4px 0' }} onClick={() => toggleLandCover(lc.id)}>
+                                {expandedLandCovers[lc.id] ? 'Sembunyikan rincian' : `Lihat rincian (${lc.items.length} item)`}
+                            </button>
+                            {expandedLandCovers[lc.id] && (
+                                <div className="table-wrapper" style={{ marginTop: 8 }}>
+                                    <table className="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Item</th>
+                                                <th>Jasa</th>
+                                                <th style={{ textAlign: 'right' }}>Produktivitas</th>
+                                                <th style={{ textAlign: 'right' }}>Harga/unit</th>
+                                                <th style={{ textAlign: 'right' }}>Total Nilai Ekonomi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {lc.items.map((item) => (
+                                                <tr key={item.id}>
+                                                    <td style={{ fontSize: 13 }}>{item.item_name}</td>
+                                                    <td style={{ fontSize: 12 }}><span className="badge badge-info">{SERVICE_CATEGORY_LABELS[item.service_category]}</span></td>
+                                                    <td style={{ textAlign: 'right', fontSize: 13 }}>{formatRupiah(item.productivity_value, 2)} {item.productivity_unit}</td>
+                                                    <td style={{ textAlign: 'right', fontSize: 13 }}>Rp{formatRupiah(item.unit_price, 0)}</td>
+                                                    <td style={{ textAlign: 'right', fontSize: 13, fontWeight: 600 }}>Rp{formatRupiah(item.total_value, 0)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+            ))}
+
+            {current.cultural_items.length > 0 && (
+                <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <strong>Cultural Services (tingkat kawasan)</strong>
+                        <div style={{ fontWeight: 700 }}>Rp{formatRupiah(current.cultural_total, 0)}</div>
+                    </div>
+                    <div className="table-wrapper" style={{ marginTop: 8 }}>
+                        <table className="data-table">
+                            <tbody>
+                                {current.cultural_items.map((item) => (
+                                    <tr key={item.id}>
+                                        <td style={{ fontSize: 13 }}>{item.item_name}</td>
+                                        <td style={{ textAlign: 'right', fontSize: 13, fontWeight: 600 }}>Rp{formatRupiah(item.total_value, 0)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function Show({ project, benefits, costs, ecosystemIndices = [] }) {
     const { auth } = usePage().props;
     const canManage = auth.user.isAdmin;
     const bcr = toNumber(project.bcr);
@@ -75,6 +199,8 @@ export default function Show({ project, benefits, costs }) {
                     </Link>
                 </div>
             </div>
+
+            <EcosystemValuationSection ecosystemIndices={ecosystemIndices} />
 
             <div className="card" style={{ marginBottom: 24 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>

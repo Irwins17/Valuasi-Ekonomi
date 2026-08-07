@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import AdminLayout from '../../../Layouts/AdminLayout';
 import Pagination from '../../../Components/ui/Pagination';
+import ConfirmDeleteButton from '../../../Components/ui/ConfirmDeleteButton';
 import { formatTriliun, formatRupiah } from '../../../lib/format';
 
 const STATUS_BADGE = {
@@ -68,6 +69,12 @@ export default function Index({ projects }) {
                                             <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                                                 <Link href={route('admin.projects.show', project.id)} className="btn btn-sm btn-ghost">Lihat</Link>
                                                 {canManage && <Link href={route('admin.projects.edit', project.id)} className="btn btn-sm btn-ghost">Edit</Link>}
+                                                {canManage && (
+                                                    <ConfirmDeleteButton
+                                                        href={route('admin.projects.destroy', project.id)}
+                                                        message={`Hapus proyek "${project.name}" (${project.code})?\n\nSemua data manfaat, biaya, dan modul EOP/TCM/CVM milik proyek ini ikut tersembunyi.`}
+                                                    />
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

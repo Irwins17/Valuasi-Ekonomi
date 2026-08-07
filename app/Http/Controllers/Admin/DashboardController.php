@@ -27,7 +27,13 @@ class DashboardController extends Controller
         $totalSurveyors = User::whereHas('role', fn($q) => $q->where('slug', 'surveyor'))->count();
 
         $aggregatedTEV = Project::sum('tev');
-        $lastProjects = Project::latest()->take(5)->get();
+        // Excludes boundary_geojson: uploaded survey-area polygons can run into
+        // the megabytes, and this list only ever renders code/name/location/
+        // status/tev — pulling the full geometry here made the dashboard take
+        // 10+ seconds to load.
+        $lastProjects = Project::latest()
+            ->take(5)
+            ->get(['id', 'code', 'name', 'location', 'status', 'tev']);
 
         $monthlyStats = $this->getMonthlyStats();
 

@@ -1,8 +1,17 @@
 import { Head, Link } from '@inertiajs/react';
 import GuestLayout from '../../Layouts/GuestLayout';
 import DonutChart from '../../Components/charts/DonutChart';
-import LeafletMap from '../../Components/map/LeafletMap';
+import ProjectLocationMap from '../../Components/map/ProjectLocationMap';
+import danauTobaBoundary from '../../data/danau-toba-boundary.json';
+import wangiWangiBoundary from '../../data/survey-location.json';
 import { toNumber, formatTriliun, formatRupiah } from '../../lib/format';
+
+// Local GeoJSON fallbacks used when a project doesn't have `boundary_geojson`
+// saved in the database yet, keyed by project code.
+const LOCAL_BOUNDARY_FALLBACKS = {
+    'PROJ-002': danauTobaBoundary,
+    'PROJ-007': wangiWangiBoundary,
+};
 
 export default function ProjectDetail({ project, benefits, costs }) {
     const benefitTotals = {};
@@ -13,7 +22,8 @@ export default function ProjectDetail({ project, benefits, costs }) {
     const benefitData = Object.values(benefitTotals);
 
     const bcr = toNumber(project.bcr);
-    const hasLocation = project.latitude && project.longitude;
+    const boundary = project.boundary_geojson || LOCAL_BOUNDARY_FALLBACKS[project.code] || null;
+    const hasLocation = Boolean(boundary) || (project.latitude && project.longitude);
 
     return (
         <GuestLayout>
@@ -124,11 +134,12 @@ export default function ProjectDetail({ project, benefits, costs }) {
                             {hasLocation && (
                                 <div className="card">
                                     <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>Lokasi</h3>
-                                    <LeafletMap
-                                        center={[toNumber(project.latitude), toNumber(project.longitude)]}
+                                    <ProjectLocationMap
+                                        boundary={boundary}
+                                        center={project.latitude && project.longitude ? [toNumber(project.latitude), toNumber(project.longitude)] : null}
                                         zoom={12}
-                                        markers={[{ lat: toNumber(project.latitude), lng: toNumber(project.longitude), popupHtml: project.name, openPopup: true }]}
-                                        height={200}
+                                        label={project.name}
+                                        height={220}
                                         style={{ borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}
                                     />
                                 </div>

@@ -21,7 +21,7 @@ export default function Edit({ project, tcmData }) {
         <AdminLayout title="Edit Data TCM">
             <Head title="Edit Data TCM" />
 
-            <div style={{ maxWidth: 700, margin: '0 auto' }} className="animate-fade-up">
+            <div className="animate-fade-up">
                 <Link href={route('admin.modules.tcm.index', project.id)} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, display: 'block', marginBottom: 16 }}>← Kembali</Link>
                 <div className="card">
                     <form onSubmit={submit}>

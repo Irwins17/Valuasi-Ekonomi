@@ -21,7 +21,7 @@ export default function Edit({ project, eopData }) {
         <AdminLayout title="Edit Data EOP">
             <Head title="Edit Data EOP" />
 
-            <div style={{ maxWidth: 700, margin: '0 auto' }} className="animate-fade-up">
+            <div className="animate-fade-up">
                 <Link href={route('admin.modules.eop.index', project.id)} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, display: 'block', marginBottom: 16 }}>← Kembali</Link>
                 <div className="card">
                     <form onSubmit={submit}>

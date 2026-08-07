@@ -22,7 +22,7 @@ export default function Create({ project }) {
         <AdminLayout title="Tambah Data TCM">
             <Head title="Tambah Data TCM" />
 
-            <div style={{ maxWidth: 700, margin: '0 auto' }} className="animate-fade-up">
+            <div className="animate-fade-up">
                 <Link href={route('admin.modules.tcm.index', project.id)} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, display: 'block', marginBottom: 16 }}>← Kembali</Link>
                 <div className="card">
                     <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Form Input TCM — {project.name}</h3>

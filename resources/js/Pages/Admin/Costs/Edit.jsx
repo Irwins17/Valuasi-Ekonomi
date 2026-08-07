@@ -27,7 +27,7 @@ export default function Edit({ project, cost }) {
         <AdminLayout title="Edit Cost">
             <Head title="Edit Cost" />
 
-            <div style={{ maxWidth: 700, margin: '0 auto' }} className="animate-fade-up">
+            <div className="animate-fade-up">
                 <Link href={route('admin.projects.show', project.id)} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, display: 'block', marginBottom: 16 }}>← Kembali</Link>
                 <div className="card">
                     <form onSubmit={submit}>

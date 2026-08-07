@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Services\Valuation\EcosystemServiceValuationCalculator;
+use App\Support\Provinces;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,8 +17,12 @@ class ProjectController extends Controller
 {
     public function index(): Response
     {
-        $projects = Project::with('creator', 'updater')
-            ->paginate(10);
+        // Excludes boundary_geojson: this list only renders code/name/
+        // description/location/status/tev/bcr, and uploaded survey-area
+        // polygons can run into the megabytes per row.
+        $projects = Project::select([
+            'id', 'code', 'name', 'description', 'location', 'status', 'tev', 'bcr',
+        ])->paginate(10);
 
         return Inertia::render('Admin/Projects/Index', ['projects' => $projects]);
     }
@@ -32,8 +39,10 @@ class ProjectController extends Controller
             'name' => ['required'],
             'description' => ['nullable'],
             'location' => ['required'],
+            'province' => ['nullable', Rule::in(Provinces::NAMES)],
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
+            'boundary_geojson' => ['nullable', 'array'],
         ]);
 
         $project = Project::create([
@@ -54,7 +63,59 @@ class ProjectController extends Controller
             'project' => $project,
             'benefits' => $project->benefits()->paginate(5),
             'costs' => $project->costs()->paginate(5),
+            'ecosystemIndices' => $this->ecosystemValuationSummary($project),
         ]);
+    }
+
+    /**
+     * Land-cover ecosystem-service valuation (Tabel 1 method), grouped per
+     * index/scenario for the "Jasa Ekosistem" section of the project page.
+     */
+    private function ecosystemValuationSummary(Project $project): array
+    {
+        $calc = new EcosystemServiceValuationCalculator;
+
+        return $project->ecosystemValuationIndices()
+            ->with(['landCovers.items', 'items' => fn ($q) => $q->whereNull('land_cover_id')])
+            ->get()
+            ->map(function ($index) use ($calc) {
+                $landCovers = $index->landCovers->map(function ($landCover) use ($calc) {
+                    $items = $landCover->items;
+                    $summary = $calc->summarize($items->map(fn ($i) => [
+                        'service_category' => $i->service_category,
+                        'total_value' => $i->total_value,
+                    ])->toArray());
+
+                    return [
+                        'id' => $landCover->id,
+                        'name' => $landCover->name,
+                        'area_ha' => $landCover->area_ha,
+                        'notes' => $landCover->notes,
+                        'items' => $items,
+                        'by_category' => $summary['by_category'],
+                        'total' => $summary['total'],
+                    ];
+                });
+
+                $culturalItems = $index->items->whereNull('land_cover_id')->values();
+                $culturalTotal = $calc->summarize($culturalItems->map(fn ($i) => [
+                    'service_category' => $i->service_category,
+                    'total_value' => $i->total_value,
+                ])->toArray())['total'];
+
+                return [
+                    'id' => $index->id,
+                    'index_number' => $index->index_number,
+                    'name' => $index->name,
+                    'notes' => $index->notes,
+                    'land_covers' => $landCovers,
+                    'cultural_items' => $culturalItems,
+                    'cultural_total' => $culturalTotal,
+                    'tev' => $landCovers->sum('total') + $culturalTotal,
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     public function edit($id): Response
@@ -71,8 +132,10 @@ class ProjectController extends Controller
             'name' => ['required'],
             'description' => ['nullable'],
             'location' => ['required'],
+            'province' => ['nullable', Rule::in(Provinces::NAMES)],
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
+            'boundary_geojson' => ['nullable', 'array'],
             'status' => ['in:draft,in_progress,completed,published'],
         ]);
 
@@ -83,6 +146,40 @@ class ProjectController extends Controller
 
         return redirect()->route('admin.projects.show', $project)
             ->with('success', 'Project berhasil diperbarui');
+    }
+
+    /**
+     * Soft-deletes the project (the model uses SoftDeletes, and the
+     * Auditable trait records who removed it). Benefits, costs and the
+     * EOP/TCM/CVM entries are deliberately left in place so the whole
+     * project can be restored intact if the deletion was a mistake.
+     *
+     * Looks the project up including trashed rows: findOrFail() would hide
+     * an already-deleted project behind the SoftDeletes scope and answer a
+     * bare 404 page, which is what a repeat delete produces — a double
+     * click, a stale list still showing the row, the browser back button,
+     * or a second tab. Those are all "already done", not errors, so they
+     * land back on the list with a message instead.
+     */
+    public function destroy($id)
+    {
+        $project = Project::withTrashed()->find($id);
+
+        if (! $project) {
+            return redirect()->route('admin.projects.index')
+                ->with('error', 'Proyek tidak ditemukan — mungkin sudah dihapus permanen.');
+        }
+
+        if ($project->trashed()) {
+            return redirect()->route('admin.projects.index')
+                ->with('success', "Proyek {$project->code} memang sudah dihapus.");
+        }
+
+        $project->update(['updated_by' => auth()->id()]);
+        $project->delete();
+
+        return redirect()->route('admin.projects.index')
+            ->with('success', "Proyek {$project->code} berhasil dihapus");
     }
 
     public function calculateTEV($id)

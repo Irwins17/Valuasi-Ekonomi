@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '../../../Layouts/AdminLayout';
 import CurrencyInput from '../../../Components/ui/CurrencyInput';
+import { VALUATION_TECHNIQUES } from '../../../data/valuationTechniques';
 
 const CATEGORIES = [
     ['direct_use', 'Direct Use'],
@@ -8,7 +9,7 @@ const CATEGORIES = [
     ['non_use', 'Non-Use'],
 ];
 const SUBCATEGORIES = ['production', 'tourism', 'recreation', 'water_regulation', 'carbon_sequestration', 'existence_value', 'bequest_value'];
-const METHODS = ['EOP', 'TCM', 'CVM', 'RC', 'Manual'];
+const LEGACY_METHODS = ['RC', 'Manual'];
 const DATA_SOURCES = ['eop', 'tcm', 'cvm', 'manual', 'literature'];
 
 export default function Create({ project }) {
@@ -31,7 +32,7 @@ export default function Create({ project }) {
         <AdminLayout title="Tambah Benefit">
             <Head title="Tambah Benefit" />
 
-            <div style={{ maxWidth: 700, margin: '0 auto' }} className="animate-fade-up">
+            <div className="animate-fade-up">
                 <Link href={route('admin.projects.show', project.id)} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, display: 'block', marginBottom: 16 }}>← Kembali ke Proyek</Link>
                 <div className="card">
                     <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Tambah Manfaat — {project.name}</h3>
@@ -65,7 +66,14 @@ export default function Create({ project }) {
                             <div className="form-group">
                                 <label className="form-label">Metode</label>
                                 <select value={data.method_used} onChange={(e) => setData('method_used', e.target.value)} className="form-input">
-                                    {METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                                    {VALUATION_TECHNIQUES.map((group) => (
+                                        <optgroup key={group.approach} label={group.approach}>
+                                            {group.techniques.map((t) => <option key={t.code} value={t.code}>{t.code} — {t.name}</option>)}
+                                        </optgroup>
+                                    ))}
+                                    <optgroup label="Lainnya">
+                                        {LEGACY_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                                    </optgroup>
                                 </select>
                             </div>
                         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
+import ErrorBoundary from '../Components/ui/ErrorBoundary';
 
 export default function GuestLayout({ children }) {
     const { props, url: currentPath } = usePage();
@@ -45,7 +46,7 @@ export default function GuestLayout({ children }) {
                 </div>
             </nav>
 
-            <main style={{ marginTop: 74 }}>{children}</main>
+            <main style={{ marginTop: 74 }}><ErrorBoundary>{children}</ErrorBoundary></main>
 
             <footer style={{ background: '#0f172a', color: '#fff', padding: '60px 0 0' }}>
                 <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px' }}>

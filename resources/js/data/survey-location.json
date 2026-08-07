@@ -1,0 +1,27 @@
+{
+    "type": "Feature",
+    "properties": {
+        "name": "Pulau Wangi-Wangi (Waha–Wanci–Longa)",
+        "description": "Area survey valuasi ekonomi Pulau Wangi-Wangi bagian utara (Waha–Wanci–Longa), Wakatobi, Sulawesi Tenggara — tidak mencakup seluruh Taman Nasional Wakatobi. Dipakai sebagai fallback saat data GeoJSON di database belum tersedia."
+    },
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [123.525, -5.205],
+                [123.555, -5.198],
+                [123.595, -5.215],
+                [123.625, -5.245],
+                [123.648, -5.270],
+                [123.638, -5.298],
+                [123.605, -5.318],
+                [123.565, -5.330],
+                [123.530, -5.322],
+                [123.512, -5.290],
+                [123.510, -5.250],
+                [123.516, -5.222],
+                [123.525, -5.205]
+            ]
+        ]
+    }
+}

@@ -27,7 +27,7 @@ export default function Create({ project }) {
         <AdminLayout title="Tambah Cost">
             <Head title="Tambah Cost" />
 
-            <div style={{ maxWidth: 700, margin: '0 auto' }} className="animate-fade-up">
+            <div className="animate-fade-up">
                 <Link href={route('admin.projects.show', project.id)} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13, display: 'block', marginBottom: 16 }}>← Kembali</Link>
                 <div className="card">
                     <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Tambah Biaya — {project.name}</h3>
