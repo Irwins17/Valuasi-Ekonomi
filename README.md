@@ -44,26 +44,26 @@ Sumber kebenaran katalog modul ada di [ValuationModuleCatalog.php](app/Support/V
 
 ### Modul Metode
 
-| Kode | Nama | Kelompok | Formula Inti |
+| Kode | Nama | Kelompok | 
 |---|---|---|---|
-| `DUV` | Direct Use Value | Direct Use | `DUV gross = Σ(Qi × Pi)` · `net = Σ(Qi × Pi) − Ci` |
-| `EOP` | Effect on Production | Direct Use | `ΔQ = Q sesudah − Q sebelum` · `Nilai = ΔQ × Harga − Biaya` |
-| `TCM` | Travel Cost Method | Revealed Preference | `CS = −1/β₁` · `Nilai rekreasi = CS × total pengunjung` |
-| `CVM` | Contingent Valuation Method | Stated Preference | `Mean WTP × Populasi` |
-| `HPM` | Hedonic Pricing Method | Revealed Preference | `ln Pₕ = α₀ + βS + γN + δE + e` · `MWTP = δ × Pₕ` |
-| `ABM` | Abatement / Defensive Expenditure | Revealed Preference | `Total avoidance = biaya defensif + biaya medis + pendapatan hilang` |
-| `CE` | Choice Experiment | Stated Preference | `MWTPₖ = −βₖ / βₚ` |
+| `DUV` | Direct Use Value | Direct Use | 
+| `EOP` | Effect on Production | Direct Use | 
+| `TCM` | Travel Cost Method | Revealed Preference |
+| `CVM` | Contingent Valuation Method | Stated Preference | 
+| `HPM` | Hedonic Pricing Method | Revealed Preference | 
+| `ABM` | Abatement / Defensive Expenditure | Revealed Preference | 
+| `CE` | Choice Experiment | Stated Preference |
 
 ### Modul Jasa Ekosistem
 
 | Kode | Jasa | Kategori | Formula |
 |---|---|---|---|
-| `FOOD` | Food Production | Provisioning | `VPi = FPi × Pi` |
-| `RAWMAT` | Raw Material | Provisioning | `VRMi = RMPi × Pi` |
-| `GENRES` | Genetic Resources | Provisioning | `VGRi = PGRi × Pi` |
-| `CLIMATE` | Climate / Carbon Storage | Regulating | `VCi = CSi × Pi` |
-| `EROSION` | Erosion Control | Regulating | `VACi = F × BPi` |
-| `WATER` | Water Supply | Regulating | `VWSi = WS × PWi` |
+| `FOOD` | Food Production | Provisioning |
+| `RAWMAT` | Raw Material | Provisioning |
+| `GENRES` | Genetic Resources | Provisioning | 
+| `CLIMATE` | Climate / Carbon Storage | Regulating | 
+| `EROSION` | Erosion Control | Regulating | 
+| `WATER` | Water Supply | Regulating |
 
 Modul `HPM`, `ABM`, dan `CE` ditandai sebagai modul lanjutan (*advanced*) dan disembunyikan di balik toggle pada daftar modul.
 
