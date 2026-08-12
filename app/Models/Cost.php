@@ -9,7 +9,8 @@ class Cost extends Model
 {
     protected $fillable = [
         'project_id', 'category', 'subcategory', 'description',
-        'value', 'payment_type', 'year_applied', 'percentage_of_total',
+        'value', 'payment_type', 'year_applied', 'pv_value', 'percentage_of_total',
+        'activity_group', 'calculation_method', 'responsible_party', 'data_status',
         'calculation_notes', 'calculated_by'
     ];
 

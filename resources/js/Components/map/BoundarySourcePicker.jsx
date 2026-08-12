@@ -7,12 +7,6 @@ const TABS = [
     { key: 'shp', label: 'Upload File SHP' },
 ];
 
-/**
- * Two ways to arrive at the same boundary_geojson/latitude/longitude:
- * pick an administrative area (auto-drawn from OpenStreetMap) or upload a
- * shapefile. Both funnel through the same onParsed/onClear contract the
- * project form already wires up.
- */
 export default function BoundarySourcePicker({ value, onParsed, onClear, province, onProvinceChange, height = 420 }) {
     const [tab, setTab] = useState('wilayah');
 

@@ -10,10 +10,44 @@ use App\Models\EnvironmentalCoefficient;
 use App\Models\MarketPrice;
 use App\Models\Project;
 use App\Models\TcmData;
+use App\Services\Valuation\EconomicValuationCalculator;
 use Illuminate\Database\Seeder;
 
 class SampleDataSeeder extends Seeder
 {
+    /**
+     * Seeds one EOP row with its derived columns filled in.
+     *
+     * EopData no longer computes them on save, so the values come from
+     * EconomicValuationCalculator — the same method the controller uses, so
+     * seeded rows and user-entered rows are arithmetically identical.
+     */
+    private function createEop(
+        int $projectId,
+        int $adminId,
+        string $commodity,
+        float $before,
+        float $after,
+        string $unit,
+        float $price,
+        string $impactType,
+    ): EopData {
+        $derived = (new EconomicValuationCalculator)->eopRecordValues($before, $after, $price);
+        unset($derived['impact_direction']);
+
+        return EopData::create([
+            'project_id' => $projectId,
+            'recorded_by' => $adminId,
+            'commodity_name' => $commodity,
+            'production_before' => $before,
+            'production_after' => $after,
+            'unit' => $unit,
+            'market_price' => $price,
+            'impact_type' => $impactType,
+            ...$derived,
+        ]);
+    }
+
     public function run(): void
     {
         $adminId = 1;
@@ -79,8 +113,8 @@ class SampleDataSeeder extends Seeder
         ]);
 
         // EOP Data for P1
-        EopData::create(['project_id' => $p1->id, 'recorded_by' => $adminId, 'commodity_name' => 'Ikan Laut',  'production_before' => 12000, 'production_after' => 10500, 'unit' => 'Ton', 'market_price' => 25000000, 'impact_type' => 'negative']);
-        EopData::create(['project_id' => $p1->id, 'recorded_by' => $adminId, 'commodity_name' => 'Madu Hutan', 'production_before' => 500,   'production_after' => 650,   'unit' => 'Kg',  'market_price' => 120000,   'impact_type' => 'positive']);
+        $this->createEop($p1->id, $adminId, 'Ikan Laut',  12000, 10500, 'Ton', 25000000, 'negative');
+        $this->createEop($p1->id, $adminId, 'Madu Hutan', 500,   650,   'Kg',  120000,   'positive');
 
         // TCM Data for P1 — respondent_id is INTEGER (auto increment-style, unique)
         $tcmOrigins = ['Jakarta', 'Bandung', 'Serang', 'Bogor', 'Tangerang', 'Sukabumi', 'Cilegon', 'Lampung'];
@@ -175,7 +209,7 @@ class SampleDataSeeder extends Seeder
             'created_by'  => $adminId,
         ]);
 
-        EopData::create(['project_id' => $p3->id, 'recorded_by' => $adminId, 'commodity_name' => 'Udang Windu', 'production_before' => 800, 'production_after' => 1200, 'unit' => 'Ton', 'market_price' => 85000000, 'impact_type' => 'positive']);
+        $this->createEop($p3->id, $adminId, 'Udang Windu', 800, 1200, 'Ton', 85000000, 'positive');
 
         $this->seedBenefits($p3->id, $adminId, [
             ['direct_use',   'production',           'Perikanan tambak',       18000000000, 'EOP', 'eop'],

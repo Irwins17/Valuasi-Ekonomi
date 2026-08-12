@@ -266,4 +266,121 @@ class ModuleDataTest extends TestCase
 
         $this->assertDatabaseCount('cvm_data', 2);
     }
+
+    // ----- Newer optional fields: stored when sent, defaulted when omitted -----
+
+    public function test_eop_stores_the_extended_fields_when_supplied(): void
+    {
+        $user = $this->admin();
+        $project = $this->project($user);
+
+        $this->actingAs($user)->post(route('admin.modules.eop.store', $project->id), [
+            'commodity_name' => 'Ikan',
+            'service_category' => 'provisioning',
+            'product_type' => 'Ikan segar',
+            'production_before' => 1000,
+            'production_after' => 1250,
+            'unit' => 'kg',
+            'market_price' => 5000,
+            'production_cost' => 200000,
+            'area_ha' => 12.5,
+            'period_year' => 2026,
+            'data_source' => 'Survei lapangan',
+            'impact_type' => 'positive',
+        ])->assertRedirect(route('admin.modules.eop.index', $project->id));
+
+        $eop = $project->eopData()->first();
+        $this->assertSame('provisioning', $eop->service_category);
+        $this->assertSame('Ikan segar', $eop->product_type);
+        $this->assertEquals(2026, $eop->period_year);
+        // gross = (1250 - 1000) * 5000 = 1_250_000; net = gross - 200_000
+        $this->assertEquals(1250000, (float) $eop->total_value);
+        $this->assertEquals(1050000, (float) $eop->net_value);
+
+        // The benefit follows the net value once a production cost is recorded.
+        $this->assertDatabaseHas('benefits', [
+            'project_id' => $project->id,
+            'description' => 'Produksi Ikan',
+            'value' => 1050000,
+        ]);
+    }
+
+    public function test_eop_service_category_defaults_when_omitted(): void
+    {
+        $user = $this->admin();
+        $project = $this->project($user);
+
+        $this->actingAs($user)->post(route('admin.modules.eop.store', $project->id), [
+            'commodity_name' => 'Kayu',
+            'production_before' => 10,
+            'production_after' => 20,
+            'unit' => 'm3',
+            'market_price' => 1000,
+            'impact_type' => 'positive',
+        ])->assertRedirect(route('admin.modules.eop.index', $project->id));
+
+        $eop = $project->eopData()->first();
+        $this->assertSame('provisioning', $eop->service_category);
+        // No cost recorded, so net equals gross.
+        $this->assertEquals(10000, (float) $eop->total_value);
+        $this->assertEquals(10000, (float) $eop->net_value);
+    }
+
+    public function test_eop_rejects_an_unknown_service_category(): void
+    {
+        $user = $this->admin();
+        $project = $this->project($user);
+
+        $this->actingAs($user)->post(route('admin.modules.eop.store', $project->id), [
+            'commodity_name' => 'Kayu',
+            'service_category' => 'not-a-category',
+            'production_before' => 10,
+            'production_after' => 20,
+            'unit' => 'm3',
+            'market_price' => 1000,
+            'impact_type' => 'positive',
+        ])->assertSessionHasErrors('service_category');
+    }
+
+    public function test_cvm_dichotomous_choice_requires_a_bid_amount(): void
+    {
+        $user = $this->admin();
+        $project = $this->project($user);
+
+        $this->actingAs($user)->post(route('admin.modules.cvm.store', $project->id), [
+            'respondent_id' => 9,
+            'question_method' => 'dichotomous_choice',
+            'willing_to_pay' => true,
+            'wtp' => 15000,
+        ])->assertSessionHasErrors('bid_amount');
+    }
+
+    public function test_cvm_stores_elicitation_fields_and_defaults_the_rest(): void
+    {
+        $user = $this->admin();
+        $project = $this->project($user);
+
+        $this->actingAs($user)->post(route('admin.modules.cvm.store', $project->id), [
+            'respondent_id' => 10,
+            'valuation_type' => 'wta',
+            'question_method' => 'dichotomous_choice',
+            'bid_amount' => 50000,
+            'willing_to_pay' => true,
+            'wtp' => 45000,
+        ])->assertRedirect(route('admin.modules.cvm.index', $project->id));
+
+        $stored = $project->cvmData()->first();
+        $this->assertSame('wta', $stored->valuation_type);
+        $this->assertSame('dichotomous_choice', $stored->question_method);
+        $this->assertEquals(50000, (float) $stored->bid_amount);
+
+        // A payload that omits them falls back to the column defaults.
+        $this->actingAs($user)->post(route('admin.modules.cvm.store', $project->id), [
+            'respondent_id' => 11, 'willing_to_pay' => true, 'wtp' => 5000,
+        ])->assertRedirect();
+
+        $defaulted = $project->cvmData()->where('respondent_id', 11)->first();
+        $this->assertSame('wtp', $defaulted->valuation_type);
+        $this->assertSame('open_ended', $defaulted->question_method);
+    }
 }

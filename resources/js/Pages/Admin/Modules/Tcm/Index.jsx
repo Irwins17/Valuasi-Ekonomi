@@ -19,15 +19,21 @@ export default function Index({ project, tcmData, stats }) {
                     <h2 style={{ fontSize: 18, fontWeight: 700 }}>Travel Cost Method (TCM)</h2>
                     <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Data biaya perjalanan pengunjung</p>
                 </div>
-                {canManage && (
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <ImportExportBar
-                            exportHref={route('admin.modules.tcm.export', project.id)}
-                            importHref={route('admin.modules.tcm.import', project.id)}
-                        />
-                        <Link href={route('admin.modules.tcm.create', project.id)} className="btn btn-sm btn-primary">+ Tambah Data</Link>
-                    </div>
-                )}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <Link href={route('admin.modules.tcm.analysis.index', project.id)} className="btn btn-sm btn-ghost" style={{ border: '1px solid var(--border)' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3v18h18" /><path d="M19 9l-5 5-4-4-3 3" /></svg>
+                        Analisis TCM
+                    </Link>
+                    {canManage && (
+                        <>
+                            <ImportExportBar
+                                exportHref={route('admin.modules.tcm.export', project.id)}
+                                importHref={route('admin.modules.tcm.import', project.id)}
+                            />
+                            <Link href={route('admin.modules.tcm.create', project.id)} className="btn btn-sm btn-primary">+ Tambah Data</Link>
+                        </>
+                    )}
+                </div>
             </div>
 
             {stats && (

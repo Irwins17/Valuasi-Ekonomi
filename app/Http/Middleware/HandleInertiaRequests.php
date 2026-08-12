@@ -53,6 +53,9 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
+                // Regression output handed back to an open analysis form so
+                // the analyst can review the coefficients before saving them.
+                'estimation' => fn () => $request->session()->get('estimation'),
             ],
         ];
     }

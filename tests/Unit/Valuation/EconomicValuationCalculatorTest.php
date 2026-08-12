@@ -18,7 +18,7 @@ class EconomicValuationCalculatorTest extends TestCase
 
     // ── TCM ──────────────────────────────────────────────────────────────
 
-    public function test_tcm_recovers_exact_coefficients_from_noiseless_linear_data(): void
+    public function test_tcm_ols_model_recovers_exact_coefficients_from_noiseless_linear_data(): void
     {
         // visits = 100 - 0.001 * travel_cost, exactly, no noise.
         $travelCosts = [10000, 20000, 30000, 40000, 50000];
@@ -30,8 +30,10 @@ class EconomicValuationCalculatorTest extends TestCase
         $result = $this->calc->calculateTCM([
             'observations' => $observations,
             'total_annual_visits' => 500000,
+            'model' => 'ols',
         ]);
 
+        $this->assertSame('ols', $result['model']);
         $this->assertEqualsWithDelta(-0.001, $result['regression']['coefficients']['travel_cost'], 1e-9);
         $this->assertEqualsWithDelta(100.0, $result['regression']['intercept'], 1e-6);
         $this->assertEqualsWithDelta(1.0, $result['regression']['r_squared'], 1e-9);
@@ -40,6 +42,65 @@ class EconomicValuationCalculatorTest extends TestCase
         $this->assertEqualsWithDelta(1000.0, $result['cs_per_visit'], 1e-6);
         // Total_CS = 1000 * 500000
         $this->assertEqualsWithDelta(5.0e8, $result['total_cs'], 1e-3);
+    }
+
+    public function test_tcm_defaults_to_the_poisson_count_model(): void
+    {
+        // ln(visits) = 4 - 0.00002 * travel_cost, realised exactly.
+        $travelCosts = [10000, 20000, 30000, 40000, 50000, 60000];
+        $observations = array_map(fn ($tc) => [
+            'travel_cost' => $tc,
+            'visits' => exp(4 - 0.00002 * $tc),
+        ], $travelCosts);
+
+        $result = $this->calc->calculateTCM([
+            'observations' => $observations,
+            'total_annual_visits' => 100000,
+        ]);
+
+        $this->assertSame('poisson', $result['model'], 'count data should use the Poisson model unless told otherwise');
+        $this->assertEqualsWithDelta(-0.00002, $result['regression']['coefficients']['travel_cost'], 1e-9);
+        $this->assertEqualsWithDelta(4.0, $result['regression']['intercept'], 1e-7);
+
+        // CS_per_visit = -1/beta1 = 50,000
+        $this->assertEqualsWithDelta(50000.0, $result['cs_per_visit'], 1e-3);
+        $this->assertEqualsWithDelta(50000.0 * 100000, $result['total_cs'], 1e-1);
+    }
+
+    public function test_tcm_poisson_handles_respondents_with_zero_visits(): void
+    {
+        // The case a linear-on-log model cannot represent at all.
+        $observations = [];
+        for ($i = 0; $i < 30; $i++) {
+            $tc = 5000 + $i * 4000;
+            $observations[] = [
+                'travel_cost' => $tc,
+                'visits' => round(exp(3.0 - 0.00025 * $tc)),
+            ];
+        }
+
+        $result = $this->calc->calculateTCM([
+            'observations' => $observations,
+            'total_annual_visits' => 20000,
+        ]);
+
+        $this->assertContains(0.0, array_map(fn ($o) => (float) $o['visits'], $observations));
+        $this->assertLessThan(0, $result['regression']['coefficients']['travel_cost']);
+        $this->assertGreaterThan(0, $result['cs_per_visit']);
+    }
+
+    public function test_tcm_rejects_an_unknown_model(): void
+    {
+        $this->expectException(ValuationException::class);
+        $this->calc->calculateTCM([
+            'observations' => [
+                ['travel_cost' => 10000, 'visits' => 90],
+                ['travel_cost' => 20000, 'visits' => 80],
+                ['travel_cost' => 30000, 'visits' => 70],
+            ],
+            'total_annual_visits' => 1000,
+            'model' => 'tobit',
+        ]);
     }
 
     public function test_tcm_throws_when_beta1_is_positive(): void

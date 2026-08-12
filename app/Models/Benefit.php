@@ -9,7 +9,9 @@ class Benefit extends Model
 {
     protected $fillable = [
         'project_id', 'category', 'subcategory', 'description',
-        'value', 'method_used', 'data_source', 'sample_size',
+        'value', 'annual_value', 'unit', 'period_year', 'pv_value',
+        'ecosystem_service_group', 'method_used', 'data_source',
+        'source_module', 'source_record_id', 'data_status', 'sample_size',
         'mean_value', 'percentage_of_tev', 'calculation_notes', 'calculated_by'
     ];
 

@@ -46,16 +46,11 @@ class CvmController extends Controller
     {
         $project = Project::findOrFail($projectId);
 
-        $validated = $request->validate([
+        $validated = $this->validateCvm($request, [
             'respondent_id' => ['required', 'integer', 'min:1', Rule::unique('cvm_data')->where('project_id', $projectId)],
-            'wtp' => ['required_if:willing_to_pay,true', 'nullable', 'numeric', 'min:0'],
-            'household_size' => ['nullable', 'integer', 'min:1'],
-            'household_income' => ['nullable', 'numeric', 'min:0'],
-            'willing_to_pay' => ['required', 'boolean'],
-            'reason_if_unwilling' => ['required_if:willing_to_pay,false', 'nullable', 'string'],
         ]);
 
-        $cvmData = CvmData::create([
+        CvmData::create([
             'project_id' => $projectId,
             'recorded_by' => auth()->id(),
             ...$validated,
@@ -80,18 +75,45 @@ class CvmController extends Controller
     {
         $cvmData = CvmData::findOrFail($cvmId);
 
-        $validated = $request->validate([
-            'wtp' => ['required_if:willing_to_pay,true', 'nullable', 'numeric', 'min:0'],
-            'household_size' => ['nullable', 'integer', 'min:1'],
-            'household_income' => ['nullable', 'numeric', 'min:0'],
-            'willing_to_pay' => ['required', 'boolean'],
-            'reason_if_unwilling' => ['required_if:willing_to_pay,false', 'nullable', 'string'],
-        ]);
-
-        $cvmData->update($validated);
+        $cvmData->update($this->validateCvm($request));
 
         return redirect()->route('admin.modules.cvm.index', $projectId)
             ->with('success', 'Data CVM berhasil diperbarui');
+    }
+
+    /**
+     * A bid amount is only meaningful for dichotomous choice, where the
+     * respondent is answering yes/no to a specific offered price.
+     */
+    private function validateCvm(Request $request, array $extra = []): array
+    {
+        return $request->validate([
+            ...$extra,
+            'respondent_location' => ['nullable', 'string', 'max:255'],
+            'scenario' => ['nullable', 'string', 'max:255'],
+            // Optional rather than required, for the same reason as EOP's
+            // service_category: both columns carry defaults (wtp / open_ended)
+            // so an older payload still records a coherent respondent instead
+            // of being rejected, while anything actually sent is validated.
+            'valuation_type' => ['sometimes', 'in:wtp,wta'],
+            'question_method' => ['sometimes', 'in:dichotomous_choice,open_ended,payment_card'],
+            'bid_amount' => ['required_if:question_method,dichotomous_choice', 'nullable', 'numeric', 'min:0'],
+            'willing_to_pay' => ['required', 'boolean'],
+            'wtp' => ['required_if:willing_to_pay,true', 'nullable', 'numeric', 'min:0'],
+            'household_size' => ['nullable', 'integer', 'min:1'],
+            'household_income' => ['nullable', 'numeric', 'min:0'],
+            'age' => ['nullable', 'integer', 'min:0', 'max:120'],
+            'education_level' => ['nullable', 'string', 'max:120'],
+            'occupation' => ['nullable', 'string', 'max:120'],
+            'reason_if_unwilling' => ['required_if:willing_to_pay,false', 'nullable', 'string', 'max:500'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ], [
+            'bid_amount.required_if' => 'Nilai tawaran wajib diisi untuk metode dichotomous choice.',
+        ], [
+            'respondent_id' => 'ID responden',
+            'bid_amount' => 'nilai tawaran',
+            'willing_to_pay' => 'kesediaan membayar',
+        ]);
     }
 
     private function calculateMedian($array)

@@ -2,9 +2,12 @@
 
 namespace App\Services\Valuation;
 
+use App\Models\ProjectValuationSetting;
 use App\Services\Valuation\Exceptions\ValuationException;
 use App\Services\Valuation\Math\LogisticRegression;
 use App\Services\Valuation\Math\OlsRegression;
+use App\Services\Valuation\Math\PoissonRegression;
+use App\Services\Valuation\Math\ProbitRegression;
 
 /**
  * Economic valuation calculators for the three methods used in this
@@ -22,18 +25,34 @@ use App\Services\Valuation\Math\OlsRegression;
  */
 class EconomicValuationCalculator
 {
+    /** Demand models available to calculateTCM(). */
+    public const TCM_MODELS = ['poisson', 'negative_binomial', 'ols'];
+
     /**
      * Travel Cost Method.
      *
-     * Fits the demand function V_i = beta0 + beta1*TC_i + sum(betak*Xki) by
-     * OLS, then derives the consumer surplus per visit and the total annual
-     * recreation value of the site.
+     * Fits the demand function for visits against travel cost and any
+     * socio-economic variables, then derives the consumer surplus per visit
+     * and the total annual recreation value of the site.
+     *
+     * The default model is Poisson, because visits are a count: they are
+     * non-negative and frequently zero, which is precisely where a linear
+     * model misbehaves (it can predict negative visits, and the log-linear
+     * alternative is undefined at zero). `negative_binomial` relaxes the
+     * Poisson equidispersion assumption, and `ols` keeps the original linear
+     * specification available for studies that were designed around it.
+     *
+     * In every case CS per visit is -1/beta1 — the area under the estimated
+     * demand curve for one visit — so the downstream valuation is unchanged
+     * in meaning by the choice of link.
      *
      * @param  array{
      *     observations: array<int, array{visits: float|int, travel_cost: float|int, socio_economic?: array<string, float|int>}>,
      *     total_annual_visits: float|int,
+     *     model?: 'poisson'|'negative_binomial'|'ols',
      * }  $data
      * @return array{
+     *     model: string,
      *     regression: array,
      *     cs_per_visit: float,
      *     total_annual_visits: float,
@@ -68,8 +87,17 @@ class EconomicValuationCalculator
             $y[] = (float) $row['visits'];
         }
 
+        $model = $data['model'] ?? 'poisson';
+        if (! in_array($model, self::TCM_MODELS, true)) {
+            throw new ValuationException('TCM: model "'.$model.'" tidak dikenal. Pilih salah satu dari: '.implode(', ', self::TCM_MODELS).'.');
+        }
+
         $featureNames = array_merge(['travel_cost'], $socioKeys);
-        $regression = OlsRegression::fit($y, $x, $featureNames);
+        $regression = match ($model) {
+            'ols' => OlsRegression::fit($y, $x, $featureNames),
+            'negative_binomial' => PoissonRegression::fitNegativeBinomial($y, $x, $featureNames),
+            default => PoissonRegression::fit($y, $x, $featureNames),
+        };
 
         $beta1 = $regression['coefficients']['travel_cost'];
 
@@ -97,6 +125,7 @@ class EconomicValuationCalculator
         $totalCs = $csPerVisit * (float) $data['total_annual_visits'];
 
         return [
+            'model' => $model,
             'regression' => $regression,
             'cs_per_visit' => $csPerVisit,
             'total_annual_visits' => (float) $data['total_annual_visits'],
@@ -226,8 +255,15 @@ class EconomicValuationCalculator
             $y[] = (int) $row['response'];
         }
 
+        $model = $data['model'] ?? 'logit';
+        if (! in_array($model, ['logit', 'probit'], true)) {
+            throw new ValuationException('CVM (dichotomous): model "'.$model.'" tidak dikenal. Pilih "logit" atau "probit".');
+        }
+
         $featureNames = array_merge(['bid'], $socioKeys);
-        $regression = LogisticRegression::fit($y, $x, $featureNames);
+        $regression = $model === 'probit'
+            ? ProbitRegression::fit($y, $x, $featureNames)
+            : LogisticRegression::fit($y, $x, $featureNames);
 
         $beta = $regression['coefficients']['bid'];
 
@@ -262,6 +298,7 @@ class EconomicValuationCalculator
         $totalWtp = $ewtp * (float) $data['population'];
 
         return [
+            'model' => $model,
             'regression' => $regression,
             'ewtp' => $ewtp,
             'population' => (float) $data['population'],
@@ -359,6 +396,285 @@ class EconomicValuationCalculator
             'c1' => $c1,
             'delta_c' => $deltaC,
             'delta_nv' => $deltaNv,
+        ];
+    }
+
+    /**
+     * Hedonic Pricing Method.
+     *
+     *   ln Ph = alpha0 + beta*S + gamma*N + delta*E + e
+     *   MWTP  = dP/dE = delta * Ph
+     *   Nilai agregat = MWTP * delta_E * M
+     *
+     * The model is fit on ln(price), so delta is a semi-elasticity — the
+     * proportional price change per unit of the environmental attribute.
+     * Multiplying by the price level is what turns it back into rupiah, which
+     * is why MWTP is delta * Ph rather than delta alone.
+     *
+     * @param  array{
+     *     observations: array<int, array{price: float|int, environment: float|int, controls?: array<string, float|int>}>,
+     *     delta_e?: float|int,
+     *     affected_units?: float|int,
+     * }  $data
+     */
+    public function calculateHPM(array $data): array
+    {
+        $observations = $data['observations'] ?? [];
+        if (! is_array($observations) || count($observations) === 0) {
+            throw new ValuationException('HPM: data "observations" wajib diisi dan tidak boleh kosong.');
+        }
+
+        $controlKeys = array_keys($observations[0]['controls'] ?? []);
+
+        $y = [];
+        $x = [];
+        foreach (array_values($observations) as $i => $row) {
+            if (! isset($row['price'], $row['environment'])) {
+                throw new ValuationException("HPM: observasi ke-{$i} harus memiliki 'price' dan 'environment'.");
+            }
+            if ($row['price'] <= 0) {
+                throw new ValuationException("HPM: harga properti pada observasi ke-{$i} harus lebih besar dari 0 (model diestimasi pada ln harga).");
+            }
+
+            $x[] = $this->extractSocioEconomicRow(
+                ['socio_economic' => $row['controls'] ?? []],
+                $controlKeys,
+                'HPM',
+                $i,
+                [(float) $row['environment']],
+            );
+            $y[] = log((float) $row['price']);
+        }
+
+        $featureNames = array_merge(['environment'], $controlKeys);
+        $regression = OlsRegression::fit($y, $x, $featureNames);
+
+        $delta = $regression['coefficients']['environment'];
+        $meanPrice = array_sum(array_map(fn ($o) => (float) $o['price'], $observations)) / count($observations);
+
+        $mwtp = $delta * $meanPrice;
+        $deltaE = (float) ($data['delta_e'] ?? 0);
+        $affectedUnits = (float) ($data['affected_units'] ?? 0);
+
+        return [
+            'regression' => $regression,
+            'implicit_price' => $delta,
+            'mean_price' => $meanPrice,
+            'mwtp' => $mwtp,
+            'delta_e' => $deltaE,
+            'affected_units' => $affectedUnits,
+            'aggregate_value' => $mwtp * $deltaE * $affectedUnits,
+        ];
+    }
+
+    // ── Present value and project-level metrics ──────────────────────────
+
+    /**
+     * Discounts one amount back to the base year.
+     *
+     *   PV = Value / (1 + r)^n,  r = discount_rate / 100,  n = year - baseYear
+     *
+     * `n` is floored at zero on purpose. An amount dated before the base year
+     * would otherwise be *compounded upward*, quietly inflating a total — and
+     * a benefit recorded in an earlier year is far more often a data-entry
+     * slip than a deliberate statement about past value. Treating it as
+     * present-year money leaves it at face value instead, which is visible and
+     * conservative rather than silently generous.
+     *
+     * A rate of 0 leaves the amount untouched, which is what makes an
+     * undiscounted project a special case of this one code path rather than a
+     * separate branch.
+     */
+    public function calculatePV(float $value, int $year, int $baseYear, float $discountRate): float
+    {
+        if ($discountRate <= -100.0) {
+            throw new ValuationException('Discount rate tidak boleh -100% atau kurang — faktor diskonto (1 + r) menjadi nol atau negatif.');
+        }
+
+        $n = max(0, $year - $baseYear);
+
+        if ($n === 0) {
+            return $value;
+        }
+
+        return $value / ((1 + $discountRate / 100) ** $n);
+    }
+
+    /**
+     * Net present value: discounted benefits less discounted costs.
+     *
+     * This is the same quantity the project pages call TEV — the net economic
+     * value of the project once timing is accounted for.
+     */
+    public function calculateNPV(float $totalPvBenefits, float $totalPvCosts): float
+    {
+        return $totalPvBenefits - $totalPvCosts;
+    }
+
+    /**
+     * Benefit-cost ratio on discounted figures.
+     *
+     * With no costs recorded the ratio is undefined rather than infinite, so
+     * this returns null and leaves the decision of how to present that to the
+     * caller. Reporting 0 would read as "no benefit at all", which is the
+     * opposite of what a project with benefits and no recorded cost means.
+     */
+    public function calculateBCR(float $totalPvBenefits, float $totalPvCosts): ?float
+    {
+        if ($totalPvCosts < 0) {
+            throw new ValuationException('Total biaya (PV) tidak boleh negatif untuk perhitungan BCR.');
+        }
+
+        if ($totalPvCosts == 0.0) {
+            return null;
+        }
+
+        return $totalPvBenefits / $totalPvCosts;
+    }
+
+    /**
+     * Sums the present value of a list of amounts.
+     *
+     * Each entry is `['value' => …, 'year' => …|null]`; a null year means the
+     * amount is already stated in base-year terms.
+     *
+     * @param  array<int, array{value: float|int, year?: int|null}>  $items
+     */
+    public function sumPresentValue(array $items, ProjectValuationSetting $settings): float
+    {
+        $total = 0.0;
+
+        foreach ($items as $item) {
+            $total += $this->calculatePV(
+                (float) ($item['value'] ?? 0),
+                (int) ($item['year'] ?? $settings->base_year),
+                (int) $settings->base_year,
+                (float) $settings->discount_rate,
+            );
+        }
+
+        return $total;
+    }
+
+    /**
+     * Total Economic Value on a discounted basis — the present value of a
+     * project's benefits.
+     *
+     * @param  array<int, array{value: float|int, year?: int|null}>  $benefits
+     */
+    public function calculateDiscountedTEV(array $benefits, ProjectValuationSetting $settings): float
+    {
+        return $this->sumPresentValue($benefits, $settings);
+    }
+
+    // ── Record-level valuations ──────────────────────────────────────────
+    //
+    // These are the per-row arithmetic behind the data-entry modules. They
+    // live here, next to the regression methods, so a stored figure and the
+    // figure shown in a form preview can never drift apart: the controller,
+    // the seeders and any import all call the same method.
+
+    /**
+     * Effect on Production for a single record.
+     *
+     *   delta_q     = Q_after - Q_before
+     *   gross_value = delta_q * market_price
+     *   net_value   = gross_value - production_cost   (Ci is a TOTAL cost)
+     *
+     * `production_cost` is the total cost attached to the period being
+     * valued, not a per-unit rate — a caller holding a unit cost must
+     * multiply it out before passing it in.
+     *
+     * @return array{production_change: float, total_value: float, net_value: float, impact_direction: string}
+     */
+    public function eopRecordValues(
+        float|int|null $productionBefore,
+        float|int|null $productionAfter,
+        float|int|null $marketPrice,
+        float|int|null $productionCost = 0,
+    ): array {
+        $deltaQ = (float) $productionAfter - (float) $productionBefore;
+        $gross = $deltaQ * (float) $marketPrice;
+        $net = $gross - (float) $productionCost;
+
+        return [
+            'production_change' => $deltaQ,
+            'total_value' => $gross,
+            'net_value' => $net,
+            'impact_direction' => $deltaQ > 0 ? 'positive' : ($deltaQ < 0 ? 'negative' : 'neutral'),
+        ];
+    }
+
+    /**
+     * Direct Use Value for a single record: gross = Qi * Pi, net = gross - Ci.
+     *
+     * @return array{gross_value: float, net_value: float}
+     */
+    public function duvRecordValues(
+        float|int|null $quantity,
+        float|int|null $marketPrice,
+        float|int|null $productionCost = 0,
+    ): array {
+        $gross = (float) $quantity * (float) $marketPrice;
+
+        return [
+            'gross_value' => $gross,
+            'net_value' => $gross - (float) $productionCost,
+        ];
+    }
+
+    /**
+     * Averting behaviour / defensive expenditure for one household.
+     *
+     *   defensive_expenditure = (Q * P) + biaya waktu
+     *   lost_income           = hari sakit * upah harian
+     *   total_avoidance       = defensif + biaya medis + pendapatan hilang
+     *
+     * @return array{defensive_expenditure: float, lost_income: float, total_avoidance: float}
+     */
+    public function abmRecordValues(
+        float|int|null $quantity,
+        float|int|null $unitPrice,
+        float|int|null $timeCost = 0,
+        float|int|null $medicalCost = 0,
+        float|int|null $sickDays = 0,
+        float|int|null $dailyWage = 0,
+    ): array {
+        $defensive = (float) $quantity * (float) $unitPrice + (float) $timeCost;
+        $lostIncome = (float) $sickDays * (float) $dailyWage;
+
+        return [
+            'defensive_expenditure' => $defensive,
+            'lost_income' => $lostIncome,
+            'total_avoidance' => $defensive + (float) $medicalCost + $lostIncome,
+        ];
+    }
+
+    /**
+     * Tabel 1 ecosystem-service record: a per-hectare quantity times a unit
+     * price, scaled by area.
+     *
+     *   value_per_ha = quantity * unit_price * price_conversion
+     *   total_value  = value_per_ha * area_ha
+     *
+     * `price_conversion` reconciles the two units when they differ — Water
+     * Supply records serapan in m3 while the tariff is quoted per litre, and
+     * without the factor of 1,000 the value would be understated that far.
+     *
+     * @return array{price_conversion: float, value_per_ha: float, total_value: float}
+     */
+    public function ecosystemServiceRecordValues(
+        float|int|null $quantity,
+        float|int|null $unitPrice,
+        float|int|null $areaHa = 0,
+        float $priceConversion = 1.0,
+    ): array {
+        $valuePerHa = (float) $quantity * (float) $unitPrice * $priceConversion;
+
+        return [
+            'price_conversion' => $priceConversion,
+            'value_per_ha' => $valuePerHa,
+            'total_value' => $valuePerHa * (float) $areaHa,
         ];
     }
 

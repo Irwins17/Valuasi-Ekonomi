@@ -14,9 +14,10 @@ class EopData extends Model
     protected $table = 'eop_data';
 
     protected $fillable = [
-        'project_id', 'commodity_name', 'production_before', 'production_after',
-        'production_change', 'unit', 'market_price', 'total_value',
-        'impact_type', 'recorded_by', 'notes'
+        'project_id', 'service_category', 'commodity_name', 'product_type',
+        'production_before', 'production_after', 'production_change', 'unit',
+        'market_price', 'production_cost', 'total_value', 'net_value',
+        'area_ha', 'period_year', 'data_source', 'impact_type', 'recorded_by', 'notes',
     ];
 
     protected $casts = [
@@ -24,19 +25,24 @@ class EopData extends Model
         'production_after'   => 'decimal:2',
         'production_change'  => 'decimal:2',
         'market_price'       => 'decimal:2',
+        'production_cost'    => 'decimal:2',
         'total_value'        => 'decimal:2',
+        'net_value'          => 'decimal:2',
+        'area_ha'            => 'decimal:4',
+        'period_year'        => 'integer',
     ];
 
-    protected static function boot(): void
-    {
-        parent::boot();
-
-        static::saving(function ($model) {
-            $model->production_change = $model->production_after - $model->production_before;
-            $model->total_value       = $model->production_change * $model->market_price;
-        });
-    }
-
+    /**
+     * Derived columns — production_change, total_value and net_value — are
+     * computed by EconomicValuationCalculator::eopRecordValues() and passed
+     * in by whoever writes the row. The formula deliberately does not live
+     * here: keeping it in the calculator is what stops a stored figure and a
+     * form preview from drifting apart.
+     *
+     * `total_value` remains the gross ΔQ × price it has always been, so no
+     * previously stored figure changes meaning; `net_value` subtracts the
+     * production cost and equals the gross whenever no cost is recorded.
+     */
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);

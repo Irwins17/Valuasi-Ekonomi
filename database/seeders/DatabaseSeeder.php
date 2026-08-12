@@ -11,11 +11,17 @@ class DatabaseSeeder extends Seeder
 
     public function run(): void
     {
+        // Only roles and login accounts are seeded by default — the system is
+        // meant to start empty so real input surfaces its own bugs.
+        //
+        // The demo datasets still exist and are still exercised by their
+        // tests (SeederValuationIntegrityTest, PulauObiEcosystemSeederTest);
+        // run them by hand when a populated database is wanted:
+        //   php artisan db:seed --class=SampleDataSeeder
+        //   php artisan db:seed --class=RegionalValuationSeeder
+        //   php artisan db:seed --class=PulauObiEcosystemSeeder
         $this->call([
             RoleAndUserSeeder::class,
-            SampleDataSeeder::class,
-            RegionalValuationSeeder::class,
-            PulauObiEcosystemSeeder::class,
         ]);
     }
 }

@@ -362,10 +362,16 @@ class RegionalValuationSeeder extends Seeder
         ];
 
         foreach ($c['eop_rows'] as $row) {
+            // Derived columns come from the calculator now that the model no
+            // longer computes them on save.
+            $derived = $this->calc->eopRecordValues($row['before'], $row['after'], $row['price']);
+            unset($derived['impact_direction']);
+
             $eop = EopData::create([
                 'project_id' => $project->id, 'recorded_by' => $c['admin_id'],
                 'commodity_name' => $row['commodity'], 'production_before' => $row['before'], 'production_after' => $row['after'],
                 'unit' => $row['unit'], 'market_price' => $row['price'], 'impact_type' => $row['after'] >= $row['before'] ? 'positive' : 'negative',
+                ...$derived,
             ]);
             $eopResult = $this->calc->calculateEOP([
                 'market_price' => (float) $eop->market_price,

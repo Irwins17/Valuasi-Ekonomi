@@ -16,13 +16,17 @@ class CvmData extends Model
     protected $fillable = [
         'project_id', 'respondent_id', 'wtp', 'wtp_category', 'household_size',
         'household_income', 'income_category', 'respondent_location', 'education_level',
-        'willing_to_pay', 'reason_if_unwilling', 'recorded_by', 'notes'
+        'willing_to_pay', 'reason_if_unwilling', 'scenario', 'valuation_type',
+        'question_method', 'bid_amount', 'age', 'occupation', 'recorded_by', 'notes',
     ];
 
     protected $casts = [
         'wtp' => 'decimal:2',
         'household_income' => 'decimal:2',
+        'bid_amount' => 'decimal:2',
         'willing_to_pay' => 'boolean',
+        'household_size' => 'integer',
+        'age' => 'integer',
     ];
 
     public function project(): BelongsTo

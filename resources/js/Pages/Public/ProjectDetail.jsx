@@ -2,27 +2,20 @@ import { Head, Link } from '@inertiajs/react';
 import GuestLayout from '../../Layouts/GuestLayout';
 import DonutChart from '../../Components/charts/DonutChart';
 import ProjectLocationMap from '../../Components/map/ProjectLocationMap';
-import danauTobaBoundary from '../../data/danau-toba-boundary.json';
-import wangiWangiBoundary from '../../data/survey-location.json';
 import { toNumber, formatTriliun, formatRupiah } from '../../lib/format';
 
-// Local GeoJSON fallbacks used when a project doesn't have `boundary_geojson`
-// saved in the database yet, keyed by project code.
-const LOCAL_BOUNDARY_FALLBACKS = {
-    'PROJ-002': danauTobaBoundary,
-    'PROJ-007': wangiWangiBoundary,
-};
-
-export default function ProjectDetail({ project, benefits, costs }) {
+export default function ProjectDetail({ project, benefits, costs, valuationSettings }) {
+    // Present values, so the composition adds up to the TEV headline above it
+    // rather than to the sum of undiscounted amounts.
     const benefitTotals = {};
     benefits.forEach((b) => {
-        benefitTotals[b.category] = (benefitTotals[b.category] || 0) + toNumber(b.value);
+        benefitTotals[b.category] = (benefitTotals[b.category] || 0) + toNumber(b.pv_value);
     });
     const benefitLabels = Object.keys(benefitTotals).map((k) => k.replace('_', ' '));
     const benefitData = Object.values(benefitTotals);
 
     const bcr = toNumber(project.bcr);
-    const boundary = project.boundary_geojson || LOCAL_BOUNDARY_FALLBACKS[project.code] || null;
+    const boundary = project.boundary_geojson || null;
     const hasLocation = Boolean(boundary) || (project.latitude && project.longitude);
 
     return (
@@ -68,6 +61,17 @@ export default function ProjectDetail({ project, benefits, costs }) {
                         </div>
                     </div>
 
+                    {valuationSettings && (
+                        <div className="alert alert-info" style={{ marginBottom: 24 }}>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+                            <span>
+                                Seluruh nilai adalah Present Value pada tahun dasar {valuationSettings.base_year},
+                                discount rate {formatRupiah(valuationSettings.discount_rate, 2)}% per tahun ({valuationSettings.currency}).
+                                Pos tanpa tahun dihitung pada nilai nominalnya.
+                            </span>
+                        </div>
+                    )}
+
                     <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24 }}>
                         <div>
                             <div className="card" style={{ marginBottom: 24 }}>
@@ -75,7 +79,7 @@ export default function ProjectDetail({ project, benefits, costs }) {
                                 {benefits.length ? (
                                     <div className="table-wrapper">
                                         <table className="data-table">
-                                            <thead><tr><th>Kategori</th><th>Subkategori</th><th>Deskripsi</th><th>Metode</th><th style={{ textAlign: 'right' }}>Nilai</th></tr></thead>
+                                            <thead><tr><th>Kategori</th><th>Subkategori</th><th>Deskripsi</th><th>Metode</th><th style={{ textAlign: 'right' }}>Tahun</th><th style={{ textAlign: 'right' }}>Nilai (PV)</th></tr></thead>
                                             <tbody>
                                                 {benefits.map((b) => (
                                                     <tr key={b.id}>
@@ -83,7 +87,11 @@ export default function ProjectDetail({ project, benefits, costs }) {
                                                         <td style={{ fontSize: 13 }}>{b.subcategory?.replace('_', ' ')}</td>
                                                         <td style={{ fontSize: 13 }}>{b.description}</td>
                                                         <td><span className="badge badge-info">{b.method_used}</span></td>
-                                                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>Rp{formatRupiah(b.value)}</td>
+                                                        <td style={{ textAlign: 'right', fontSize: 13, color: 'var(--text-muted)' }}>{b.period_year || '—'}</td>
+                                                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--primary)' }}>
+                                                            Rp{formatRupiah(b.pv_value)}
+                                                            <div style={{ fontSize: 10.5, fontWeight: 400, color: 'var(--text-muted)' }}>nominal Rp{formatRupiah(b.value)}</div>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -99,14 +107,18 @@ export default function ProjectDetail({ project, benefits, costs }) {
                                 {costs.length ? (
                                     <div className="table-wrapper">
                                         <table className="data-table">
-                                            <thead><tr><th>Kategori</th><th>Subkategori</th><th>Deskripsi</th><th style={{ textAlign: 'right' }}>Nilai</th></tr></thead>
+                                            <thead><tr><th>Kategori</th><th>Subkategori</th><th>Deskripsi</th><th style={{ textAlign: 'right' }}>Tahun</th><th style={{ textAlign: 'right' }}>Nilai (PV)</th></tr></thead>
                                             <tbody>
                                                 {costs.map((c) => (
                                                     <tr key={c.id}>
                                                         <td><span className={`badge ${c.category === 'direct_cost' ? 'badge-warning' : 'badge-danger'}`}>{c.category.replace('_', ' ')}</span></td>
                                                         <td style={{ fontSize: 13 }}>{c.subcategory?.replace('_', ' ')}</td>
                                                         <td style={{ fontSize: 13 }}>{c.description}</td>
-                                                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--accent)' }}>Rp{formatRupiah(c.value)}</td>
+                                                        <td style={{ textAlign: 'right', fontSize: 13, color: 'var(--text-muted)' }}>{c.year_applied || '—'}</td>
+                                                        <td style={{ textAlign: 'right', fontWeight: 700, color: 'var(--accent)' }}>
+                                                            Rp{formatRupiah(c.pv_value)}
+                                                            <div style={{ fontSize: 10.5, fontWeight: 400, color: 'var(--text-muted)' }}>nominal Rp{formatRupiah(c.value)}</div>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>

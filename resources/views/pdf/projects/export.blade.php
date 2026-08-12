@@ -29,6 +29,11 @@
         <div class="code">{{ $project->code }}</div>
         <h1>{{ $project->name }}</h1>
         <div class="meta">{{ $project->location }} &middot; Status: {{ ucfirst(str_replace('_', ' ', $project->status)) }}</div>
+        <div class="meta">
+            Present Value pada tahun dasar {{ $settings->base_year }} &middot;
+            discount rate {{ number_format((float) $settings->discount_rate, 2) }}% per tahun &middot;
+            mata uang {{ $settings->currency }}
+        </div>
     </div>
 
     <div class="stats">
@@ -61,7 +66,10 @@
     @if($project->benefits->count())
         <table class="data">
             <thead>
-                <tr><th>Kategori</th><th>Subkategori</th><th>Deskripsi</th><th>Metode</th><th class="right">Nilai (Rp)</th></tr>
+                <tr>
+                    <th>Kategori</th><th>Subkategori</th><th>Deskripsi</th><th>Metode</th>
+                    <th class="right">Tahun</th><th class="right">Nominal (Rp)</th><th class="right">PV (Rp)</th>
+                </tr>
             </thead>
             <tbody>
                 @foreach($project->benefits as $b)
@@ -70,10 +78,18 @@
                         <td>{{ str_replace('_', ' ', ucfirst($b->subcategory)) }}</td>
                         <td>{{ $b->description }}</td>
                         <td>{{ $b->method_used }}</td>
+                        <td class="right">{{ $b->period_year ?? '—' }}</td>
                         <td class="right">{{ number_format($b->value) }}</td>
+                        <td class="right">{{ number_format($b->pv_value) }}</td>
                     </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6"><strong>Total Manfaat (PV)</strong></td>
+                    <td class="right"><strong>{{ number_format($project->benefits->sum('pv_value')) }}</strong></td>
+                </tr>
+            </tfoot>
         </table>
     @else
         <p class="empty">Belum ada data manfaat.</p>
@@ -83,7 +99,10 @@
     @if($project->costs->count())
         <table class="data">
             <thead>
-                <tr><th>Kategori</th><th>Subkategori</th><th>Deskripsi</th><th class="right">Nilai (Rp)</th></tr>
+                <tr>
+                    <th>Kategori</th><th>Subkategori</th><th>Deskripsi</th><th>Kelompok Kegiatan</th>
+                    <th class="right">Tahun</th><th class="right">Nominal (Rp)</th><th class="right">PV (Rp)</th>
+                </tr>
             </thead>
             <tbody>
                 @foreach($project->costs as $c)
@@ -91,10 +110,19 @@
                         <td>{{ str_replace('_', ' ', ucfirst($c->category)) }}</td>
                         <td>{{ str_replace('_', ' ', ucfirst($c->subcategory)) }}</td>
                         <td>{{ $c->description }}</td>
+                        <td>{{ $activityGroups[$c->activity_group] ?? '—' }}</td>
+                        <td class="right">{{ $c->year_applied ?? '—' }}</td>
                         <td class="right">{{ number_format($c->value) }}</td>
+                        <td class="right">{{ number_format($c->pv_value) }}</td>
                     </tr>
                 @endforeach
             </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6"><strong>Total Biaya (PV)</strong></td>
+                    <td class="right"><strong>{{ number_format($project->costs->sum('pv_value')) }}</strong></td>
+                </tr>
+            </tfoot>
         </table>
     @else
         <p class="empty">Belum ada data biaya.</p>

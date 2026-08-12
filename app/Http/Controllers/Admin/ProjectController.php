@@ -4,8 +4,13 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\ProjectValuationSetting;
+use App\Models\ValuationModule;
+use App\Services\Valuation\BenefitCostPresentValues;
+use App\Services\Valuation\DoubleCountingChecker;
 use App\Services\Valuation\EcosystemServiceValuationCalculator;
 use App\Support\Provinces;
+use App\Support\ValuationModuleCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
@@ -15,6 +20,11 @@ use Spatie\LaravelPdf\Facades\Pdf;
 
 class ProjectController extends Controller
 {
+    public function __construct(
+        private readonly DoubleCountingChecker $doubleCounting,
+        private readonly BenefitCostPresentValues $presentValues,
+    ) {}
+
     public function index(): Response
     {
         // Excludes boundary_geojson: this list only renders code/name/
@@ -59,11 +69,39 @@ class ProjectController extends Controller
     {
         $project = Project::withCount(['eopData', 'tcmData', 'cvmData'])->findOrFail($id);
 
+        $settings = $project->valuation_settings;
+
         return Inertia::render('Admin/Projects/Show', [
             'project' => $project,
-            'benefits' => $project->benefits()->paginate(5),
-            'costs' => $project->costs()->paginate(5),
+            // through() keeps the paginator's meta intact while giving each row
+            // a pv_value that is on the same basis as the totals above it.
+            'benefits' => $project->benefits()->paginate(5)
+                ->through(fn ($benefit) => $this->presentValues->benefit($benefit, $settings)),
+            'costs' => $project->costs()->paginate(5)
+                ->through(fn ($cost) => $this->presentValues->cost($cost, $settings)),
             'ecosystemIndices' => $this->ecosystemValuationSummary($project),
+            // Advisory only — nothing here blocks a save. The page shows them
+            // beside the totals because an inflated TEV is invisible in the
+            // number itself; the overlap is only visible in the rows.
+            'doubleCountingWarnings' => $this->doubleCounting->check($project),
+            'valuationSettings' => [
+                'base_year' => (int) $settings->base_year,
+                'discount_rate' => (float) $settings->discount_rate,
+                'analysis_period' => (int) $settings->analysis_period,
+                'currency' => $settings->currency,
+                'start_year' => $settings->start_year,
+                'end_year' => $settings->end_year,
+                'eop_value_basis' => $settings->eop_value_basis,
+                // Distinguishes "never configured, showing defaults" from
+                // "deliberately set to these values" on the page.
+                'is_configured' => $project->valuationSetting !== null,
+            ],
+            'eopValueBases' => ProjectValuationSetting::EOP_VALUE_BASES,
+            'modules' => collect(ValuationModule::resolveForProject($project))
+                ->where('show_on_project_detail', true)
+                ->values()
+                ->all(),
+            'serviceCategories' => ValuationModuleCatalog::SERVICE_CATEGORIES,
         ]);
     }
 
@@ -193,8 +231,19 @@ class ProjectController extends Controller
     public function export($id)
     {
         $project = Project::with(['benefits', 'costs'])->findOrFail($id);
+        $settings = $project->valuation_settings;
 
-        return Pdf::view('pdf.projects.export', ['project' => $project])
+        $this->presentValues->benefits($project->benefits, $settings);
+        $this->presentValues->costs($project->costs, $settings);
+
+        return Pdf::view('pdf.projects.export', [
+            'project' => $project,
+            // A printed present value is unreadable without the rate and base
+            // year it was discounted under, and a PDF outlives the screen it
+            // was exported from — so the assumptions travel with it.
+            'settings' => $settings,
+            'activityGroups' => CostController::ACTIVITY_GROUPS,
+        ])
             ->format('a4')
             ->download(Str::slug("{$project->code}-{$project->name}"));
     }

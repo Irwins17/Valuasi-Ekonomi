@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Services\Valuation\EconomicValuationCalculator;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Project extends Model
@@ -45,6 +47,31 @@ class Project extends Model
         return $this->hasMany(EopData::class);
     }
 
+    public function duvData(): HasMany
+    {
+        return $this->hasMany(DuvData::class);
+    }
+
+    public function hpmData(): HasMany
+    {
+        return $this->hasMany(HpmData::class);
+    }
+
+    public function abmData(): HasMany
+    {
+        return $this->hasMany(AbmData::class);
+    }
+
+    public function ceData(): HasMany
+    {
+        return $this->hasMany(CeData::class);
+    }
+
+    public function ecosystemServiceRecords(): HasMany
+    {
+        return $this->hasMany(EcosystemServiceRecord::class);
+    }
+
     public function tcmData(): HasMany
     {
         return $this->hasMany(TcmData::class);
@@ -75,24 +102,112 @@ class Project extends Model
         return $this->hasMany(EcosystemValuationIndex::class)->orderBy('index_number');
     }
 
+    public function valuationSetting(): HasOne
+    {
+        return $this->hasOne(ProjectValuationSetting::class);
+    }
+
+    /**
+     * The project's discounting assumptions, always present.
+     *
+     * Projects created before this feature have no row, so a default instance
+     * stands in. Callers never have to null-check, and an unconfigured
+     * project discounts nothing — its base year is its creation year and
+     * amounts without a year sit at n = 0.
+     */
+    public function getValuationSettingsAttribute(): ProjectValuationSetting
+    {
+        return $this->valuationSetting ?? ProjectValuationSetting::defaultFor($this);
+    }
+
+    /** Present value of all benefits, discounted to the base year. */
     public function getTotalBenefits()
     {
-        return $this->benefits()->sum('value');
+        return app(EconomicValuationCalculator::class)->calculateDiscountedTEV(
+            $this->discountableBenefits(),
+            $this->valuation_settings,
+        );
     }
 
+    /** Present value of all costs, discounted to the base year. */
     public function getTotalCosts()
     {
-        return $this->costs()->sum('value');
+        return app(EconomicValuationCalculator::class)->sumPresentValue(
+            $this->discountableCosts(),
+            $this->valuation_settings,
+        );
     }
 
+    /**
+     * Recomputes the project's headline figures on a present-value basis.
+     *
+     * TEV here is the net present value: discounted benefits less discounted
+     * costs. Rows recorded without a year discount by a factor of 1, so a
+     * project that has never set a year or a rate keeps exactly the totals it
+     * had before present values existed.
+     *
+     * `bcr` is left null when there are no costs — the ratio is undefined
+     * then, and storing 0 would read as "no benefit at all".
+     */
     public function calculateTEV()
     {
-        $totalBenefits = $this->getTotalBenefits();
-        $totalCosts = $this->getTotalCosts();
-        $this->total_benefits = $totalBenefits;
-        $this->total_costs = $totalCosts;
-        $this->tev = $totalBenefits - $totalCosts;
-        $this->bcr = $totalCosts > 0 ? $totalBenefits / $totalCosts : 0;
+        $calculator = app(EconomicValuationCalculator::class);
+        $settings = $this->valuation_settings;
+
+        $pvBenefits = $calculator->calculateDiscountedTEV($this->discountableBenefits(), $settings);
+        $pvCosts = $calculator->sumPresentValue($this->discountableCosts(), $settings);
+
+        $this->total_benefits = $pvBenefits;
+        $this->total_costs = $pvCosts;
+        $this->tev = $calculator->calculateNPV($pvBenefits, $pvCosts);
+        $this->bcr = $calculator->calculateBCR($pvBenefits, $pvCosts);
+
+        $this->storeRowLevelPresentValues($calculator, $settings);
+
         return $this;
+    }
+
+    /** @return array<int, array{value: float, year: int|null}> */
+    private function discountableBenefits(): array
+    {
+        return $this->benefits()->get(['id', 'value', 'period_year'])
+            ->map(fn ($b) => ['value' => (float) $b->value, 'year' => $b->period_year])
+            ->all();
+    }
+
+    /** @return array<int, array{value: float, year: int|null}> */
+    private function discountableCosts(): array
+    {
+        return $this->costs()->get(['id', 'value', 'year_applied'])
+            ->map(fn ($c) => ['value' => (float) $c->value, 'year' => $c->year_applied])
+            ->all();
+    }
+
+    /**
+     * Writes each row's own present value back, so a published total can be
+     * traced to the discounted figures it was built from rather than only to
+     * the nominal amounts.
+     */
+    private function storeRowLevelPresentValues(
+        EconomicValuationCalculator $calculator,
+        ProjectValuationSetting $settings,
+    ): void {
+        foreach ($this->benefits()->get(['id', 'value', 'period_year']) as $benefit) {
+            $benefit->updateQuietly(['pv_value' => $calculator->calculatePV(
+                (float) $benefit->value,
+                (int) ($benefit->period_year ?? $settings->base_year),
+                (int) $settings->base_year,
+                (float) $settings->discount_rate,
+            )]);
+        }
+
+        foreach ($this->costs()->get(['id', 'value', 'year_applied']) as $cost) {
+            $cost->updateQuietly(['pv_value' => $calculator->calculatePV(
+                (float) $cost->value,
+                (int) ($cost->year_applied ?? $settings->base_year),
+                (int) $settings->base_year,
+                (float) $settings->discount_rate,
+            )]);
+        }
     }
 }

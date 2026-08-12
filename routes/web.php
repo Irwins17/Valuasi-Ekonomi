@@ -7,10 +7,19 @@ use App\Http\Controllers\Admin\CostController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EnvironmentalCoefficientController;
 use App\Http\Controllers\Admin\MarketPriceController;
+use App\Http\Controllers\Admin\Modules\AbmController;
+use App\Http\Controllers\Admin\Modules\CeController;
+use App\Http\Controllers\Admin\Modules\CvmAnalysisController;
 use App\Http\Controllers\Admin\Modules\CvmController;
+use App\Http\Controllers\Admin\Modules\HpmController;
+use App\Http\Controllers\Admin\Modules\DuvController;
+use App\Http\Controllers\Admin\Modules\EcosystemServiceController;
 use App\Http\Controllers\Admin\Modules\EopController;
+use App\Http\Controllers\Admin\Modules\TcmAnalysisController;
 use App\Http\Controllers\Admin\Modules\TcmController;
+use App\Http\Controllers\Admin\Modules\ValuationModuleController;
 use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\ProjectValuationSettingController;
 use App\Http\Controllers\Admin\SensitivityController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthController;
@@ -55,6 +64,7 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/{id}', [ProjectController::class, 'update'])->name('admin.projects.update');
             Route::delete('/{id}', [ProjectController::class, 'destroy'])->name('admin.projects.destroy');
             Route::post('/{id}/calculate-tev', [ProjectController::class, 'calculateTEV'])->name('admin.projects.calculateTEV');
+            Route::put('/{id}/valuation-settings', [ProjectValuationSettingController::class, 'update'])->name('admin.projects.settings.update');
             Route::get('/{id}/export', [ProjectController::class, 'export'])->name('admin.projects.export');
         });
     });
@@ -74,6 +84,67 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/costs/{costId}', [CostController::class, 'destroy'])->name('admin.costs.destroy');
     });
 
+    // Module registry — the "Modul Valuasi" list plus custom module CRUD.
+    // Registered before the per-method groups below; its only wildcard route
+    // requires a literal "configure"/verb match, so it cannot shadow them.
+    Route::prefix('/admin/projects/{projectId}/modules')->group(function () {
+        Route::get('/', [ValuationModuleController::class, 'index'])->name('admin.modules.index');
+
+        Route::middleware(['role:admin'])->group(function () {
+            Route::get('/create', [ValuationModuleController::class, 'create'])->name('admin.modules.create');
+            Route::post('/', [ValuationModuleController::class, 'store'])->name('admin.modules.store');
+            Route::get('/{code}/configure', [ValuationModuleController::class, 'configure'])->name('admin.modules.configure');
+            Route::put('/{code}', [ValuationModuleController::class, 'update'])->name('admin.modules.update');
+            Route::delete('/{code}', [ValuationModuleController::class, 'destroy'])->name('admin.modules.destroy');
+        });
+    });
+
+    // HPM, ABM and Choice Experiment modules — same shape for all three.
+    foreach ([
+        'hpm' => [HpmController::class, 'hpmId'],
+        'abm' => [AbmController::class, 'abmId'],
+        'ce' => [CeController::class, 'ceId'],
+    ] as $slug => [$controller, $param]) {
+        Route::prefix("/admin/projects/{projectId}/modules/{$slug}")->group(function () use ($controller, $slug, $param) {
+            Route::get('/', [$controller, 'index'])->name("admin.modules.{$slug}.index");
+
+            Route::middleware(['role:admin,surveyor'])->group(function () use ($controller, $slug, $param) {
+                Route::get('/create', [$controller, 'create'])->name("admin.modules.{$slug}.create");
+                Route::post('/', [$controller, 'store'])->name("admin.modules.{$slug}.store");
+                Route::get('/{'.$param.'}/edit', [$controller, 'edit'])->name("admin.modules.{$slug}.edit");
+                Route::put('/{'.$param.'}', [$controller, 'update'])->name("admin.modules.{$slug}.update");
+                Route::delete('/{'.$param.'}', [$controller, 'destroy'])->name("admin.modules.{$slug}.destroy");
+            });
+        });
+    }
+
+    // Direct Use Value module
+    Route::prefix('/admin/projects/{projectId}/modules/duv')->group(function () {
+        Route::get('/', [DuvController::class, 'index'])->name('admin.modules.duv.index');
+
+        Route::middleware(['role:admin,surveyor'])->group(function () {
+            Route::get('/create', [DuvController::class, 'create'])->name('admin.modules.duv.create');
+            Route::post('/', [DuvController::class, 'store'])->name('admin.modules.duv.store');
+            Route::get('/{duvId}/edit', [DuvController::class, 'edit'])->name('admin.modules.duv.edit');
+            Route::put('/{duvId}', [DuvController::class, 'update'])->name('admin.modules.duv.update');
+            Route::delete('/{duvId}', [DuvController::class, 'destroy'])->name('admin.modules.duv.destroy');
+        });
+    });
+
+    // Ecosystem service modules (Tabel 1) — one set of routes for all six
+    // services; {service} selects the schema. Viewable by all roles.
+    Route::prefix('/admin/projects/{projectId}/modules/ecosystem/{service}')->group(function () {
+        Route::get('/', [EcosystemServiceController::class, 'index'])->name('admin.modules.ecosystem.index');
+
+        Route::middleware(['role:admin,surveyor'])->group(function () {
+            Route::get('/create', [EcosystemServiceController::class, 'create'])->name('admin.modules.ecosystem.create');
+            Route::post('/', [EcosystemServiceController::class, 'store'])->name('admin.modules.ecosystem.store');
+            Route::get('/{recordId}/edit', [EcosystemServiceController::class, 'edit'])->name('admin.modules.ecosystem.edit');
+            Route::put('/{recordId}', [EcosystemServiceController::class, 'update'])->name('admin.modules.ecosystem.update');
+            Route::delete('/{recordId}', [EcosystemServiceController::class, 'destroy'])->name('admin.modules.ecosystem.destroy');
+        });
+    });
+
     // EOP Module — viewable by all roles, entered by admin + surveyor
     Route::prefix('/admin/projects/{projectId}/modules/eop')->group(function () {
         Route::get('/', [EopController::class, 'index'])->name('admin.modules.eop.index');
@@ -84,6 +155,21 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{eopId}/edit', [EopController::class, 'edit'])->name('admin.modules.eop.edit');
             Route::put('/{eopId}', [EopController::class, 'update'])->name('admin.modules.eop.update');
             Route::delete('/{eopId}', [EopController::class, 'destroy'])->name('admin.modules.eop.destroy');
+        });
+    });
+
+    // TCM demand-model analyses — registered before the TCM data routes so
+    // "/tcm/analysis" matches as a literal rather than as a {tcmId}.
+    Route::prefix('/admin/projects/{projectId}/modules/tcm/analysis')->group(function () {
+        Route::get('/', [TcmAnalysisController::class, 'index'])->name('admin.modules.tcm.analysis.index');
+
+        Route::middleware(['role:admin,analyst'])->group(function () {
+            Route::get('/create', [TcmAnalysisController::class, 'create'])->name('admin.modules.tcm.analysis.create');
+            Route::post('/', [TcmAnalysisController::class, 'store'])->name('admin.modules.tcm.analysis.store');
+            Route::post('/estimate', [TcmAnalysisController::class, 'estimate'])->name('admin.modules.tcm.analysis.estimate');
+            Route::get('/{analysisId}/edit', [TcmAnalysisController::class, 'edit'])->name('admin.modules.tcm.analysis.edit');
+            Route::put('/{analysisId}', [TcmAnalysisController::class, 'update'])->name('admin.modules.tcm.analysis.update');
+            Route::delete('/{analysisId}', [TcmAnalysisController::class, 'destroy'])->name('admin.modules.tcm.analysis.destroy');
         });
     });
 
@@ -99,6 +185,21 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/{tcmId}/edit', [TcmController::class, 'edit'])->name('admin.modules.tcm.edit');
             Route::put('/{tcmId}', [TcmController::class, 'update'])->name('admin.modules.tcm.update');
             Route::delete('/{tcmId}', [TcmController::class, 'destroy'])->name('admin.modules.tcm.destroy');
+        });
+    });
+
+    // CVM logit/probit analyses — before the CVM data routes so "/cvm/analysis"
+    // matches as a literal rather than as a {cvmId}.
+    Route::prefix('/admin/projects/{projectId}/modules/cvm/analysis')->group(function () {
+        Route::get('/', [CvmAnalysisController::class, 'index'])->name('admin.modules.cvm.analysis.index');
+
+        Route::middleware(['role:admin,analyst'])->group(function () {
+            Route::get('/create', [CvmAnalysisController::class, 'create'])->name('admin.modules.cvm.analysis.create');
+            Route::post('/', [CvmAnalysisController::class, 'store'])->name('admin.modules.cvm.analysis.store');
+            Route::post('/estimate', [CvmAnalysisController::class, 'estimate'])->name('admin.modules.cvm.analysis.estimate');
+            Route::get('/{analysisId}/edit', [CvmAnalysisController::class, 'edit'])->name('admin.modules.cvm.analysis.edit');
+            Route::put('/{analysisId}', [CvmAnalysisController::class, 'update'])->name('admin.modules.cvm.analysis.update');
+            Route::delete('/{analysisId}', [CvmAnalysisController::class, 'destroy'])->name('admin.modules.cvm.analysis.destroy');
         });
     });
 

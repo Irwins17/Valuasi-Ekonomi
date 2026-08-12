@@ -68,6 +68,36 @@ class ZiggyRouteExposureTest extends TestCase
         $html = $this->get(route('landing'))->getContent();
 
         $this->assertStringNotContainsString('self).route=', $html);
-        $this->assertLessThan(16 * 1024, strlen($html), 'Landing HTML has grown unexpectedly large');
+
+        // The size guard deliberately excludes the Ziggy route table. That
+        // table grows every time a legitimate route is added, so measuring
+        // the whole document turned this into a budget that had to be raised
+        // on each new module — which is the opposite of a guard. What the
+        // test actually protects against is the ~21 KB route() *helper*
+        // coming back inline, and that lives outside the table.
+        $withoutRouteTable = preg_replace('/window\.Ziggy = \{.*?\};/s', '', $html);
+
+        $this->assertLessThan(
+            16 * 1024,
+            strlen($withoutRouteTable),
+            'Landing HTML (excluding the Ziggy route table) has grown unexpectedly large'
+        );
+    }
+
+    /**
+     * The route table itself is expected to grow with the app, but not without
+     * limit — it ships on every first page load. This keeps an eye on it
+     * separately from the helper, so a runaway table is still visible.
+     */
+    public function test_the_ziggy_route_table_stays_within_a_reasonable_budget(): void
+    {
+        $html = $this->get(route('landing'))->getContent();
+        preg_match('/window\.Ziggy = (\{.*?\});<\/script>/s', $html, $m);
+
+        $this->assertLessThan(
+            24 * 1024,
+            strlen($m[1] ?? ''),
+            'Ziggy route table has grown large enough to be worth trimming (consider scoping it per area)'
+        );
     }
 }
