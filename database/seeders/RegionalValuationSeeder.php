@@ -385,7 +385,7 @@ class RegionalValuationSeeder extends Seeder
             $c['manual_benefit']['category'], $c['manual_benefit']['subcategory'], $c['manual_benefit']['description'],
             $c['manual_benefit']['value'], 'RC', 'manual', null, null, null,
         ];
-        $benefitRows[] = ['non_use', 'existence_value', $c['existence_description'], $cvmResult['total_wtp'], 'CVM', 'cvm', count($c['cvm_rows']), $cvmResult['ewtp'], $this->cvmNote($cvmResult)];
+        $benefitRows[] = ['existence_value', 'existence_value', $c['existence_description'], $cvmResult['total_wtp'], 'CVM', 'cvm', count($c['cvm_rows']), $cvmResult['ewtp'], $this->cvmNote($cvmResult)];
 
         $this->seedBenefits($project->id, $c['admin_id'], $benefitRows);
         $this->seedCosts($project->id, $c['admin_id'], $c['costs']);

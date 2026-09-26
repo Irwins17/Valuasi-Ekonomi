@@ -3,6 +3,7 @@ import ModuleFormShell from '../../../../Components/modules/ModuleFormShell';
 import FormulaPanel from '../../../../Components/modules/FormulaPanel';
 import OutputPreview from '../../../../Components/modules/OutputPreview';
 import { toNumber } from '../../../../lib/format';
+import { DATA_COLLECTION_TYPES, collectionMethodsFor } from '../../../../lib/dataCollectionTypes';
 
 export default function Form({ project, record, statuses, serviceCategories }) {
     const isEdit = Boolean(record);
@@ -19,6 +20,8 @@ export default function Form({ project, record, statuses, serviceCategories }) {
         production_cost: record?.production_cost ?? '',
         period_year: record?.period_year ?? '',
         data_source: record?.data_source || '',
+        data_collection_type: record?.data_collection_type || '',
+        collection_method: record?.collection_method || '',
         data_status: record?.data_status || 'draft',
         notes: record?.notes || '',
     });
@@ -37,6 +40,8 @@ export default function Form({ project, record, statuses, serviceCategories }) {
         { name: 'production_cost', label: 'Biaya Produksi / Pengambilan (Ci)', type: 'currency', placeholder: 'Contoh: 5.000.000', prefix: 'Rp', hint: 'Kosongkan bila hanya menghitung DUV gross.' },
         { name: 'period_year', label: 'Periode / Tahun', type: 'year', required: true },
         { name: 'data_source', label: 'Sumber Data', type: 'text', required: true, placeholder: 'Contoh: Survei lapangan, data produksi, literatur' },
+        { name: 'data_collection_type', label: 'Jenis Data', type: 'select', options: DATA_COLLECTION_TYPES.map((t) => [t.value, t.label]), placeholder: '-- Pilih jenis data --' },
+        { name: 'collection_method', label: 'Metode Pengumpulan', type: 'select', options: collectionMethodsFor(data.data_collection_type).map((m) => [m.value, m.label]), placeholder: '-- Pilih metode --' },
         { name: 'data_status', label: 'Status Data', type: 'select', required: true, options: Object.entries(statuses) },
         { name: 'notes', label: 'Catatan (opsional)', type: 'textarea', full: true, maxLength: 500, placeholder: 'Catatan tambahan (opsional)' },
     ];
@@ -49,11 +54,11 @@ export default function Form({ project, record, statuses, serviceCategories }) {
 
     return (
         <ModuleFormShell
-            title={`${isEdit ? 'Edit' : 'Tambah'} Data Direct Use Value`}
+            title={`${isEdit ? 'Edit' : 'Tambah'} Data Nilai Pasar (Market Price)`}
             projectName={project.name}
             backHref={indexUrl}
-            backLabel="Kembali ke Data DUV"
-            formTitle={`Form Input Direct Use Value — ${project.name}`}
+            backLabel="Kembali ke Data Nilai Pasar"
+            formTitle={`Form Input Nilai Pasar (Market Price) — ${project.name}`}
             fields={fields}
             data={data}
             setData={setData}
@@ -63,14 +68,14 @@ export default function Form({ project, record, statuses, serviceCategories }) {
             sidebar={
                 <>
                     <FormulaPanel
-                        title="Formula Direct Use Value"
-                        formulas={['DUV gross = Σ(Qi × Pi)', 'DUV net = Σ(Qi × Pi) − Ci']}
+                        title="Formula Metode Nilai Pasar (Market Price)"
+                        formulas={['Nilai kotor = Σ(Qi × Pi)', 'Nilai bersih = Σ(Qi × Pi) − Ci']}
                         legend={[
                             { sym: 'Qi', desc: 'Kuantitas barang/jasa ke-i per periode' },
                             { sym: 'Pi', desc: 'Harga pasar per unit barang/jasa ke-i' },
                             { sym: 'Ci', desc: 'Biaya produksi/pengambilan barang/jasa ke-i' },
                         ]}
-                        note="Nilai proyek adalah penjumlahan seluruh baris DUV yang tercatat."
+                        note="Metode ini mengisi kategori nilai TEV 'Direct Use Value'. Nilai proyek adalah penjumlahan seluruh baris yang tercatat."
                     />
                     <OutputPreview
                         rows={[

@@ -17,7 +17,8 @@ class EopData extends Model
         'project_id', 'service_category', 'commodity_name', 'product_type',
         'production_before', 'production_after', 'production_change', 'unit',
         'market_price', 'production_cost', 'total_value', 'net_value',
-        'area_ha', 'period_year', 'data_source', 'impact_type', 'recorded_by', 'notes',
+        'area_ha', 'period_year', 'data_source', 'data_collection_type', 'collection_method',
+        'impact_type', 'recorded_by', 'notes',
     ];
 
     protected $casts = [

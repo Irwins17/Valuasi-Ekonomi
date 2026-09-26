@@ -651,6 +651,65 @@ class EconomicValuationCalculator
     }
 
     /**
+     * Replacement Cost Method — cost of replacing a natural asset/infrastructure
+     * with a built equivalent, annualised over its useful life.
+     *
+     *   total_value  = quantity * replacement_cost_per_unit
+     *   annual_value = total_value / useful_life_years   (falls back to total_value when life is unset/zero)
+     *
+     * @return array{total_value: float, annual_value: float}
+     */
+    public function rcmRecordValues(
+        float|int|null $quantity,
+        float|int|null $replacementCostPerUnit,
+        float|int|null $usefulLifeYears = null,
+    ): array {
+        $total = (float) $quantity * (float) $replacementCostPerUnit;
+        $life = (float) ($usefulLifeYears ?? 0);
+
+        return [
+            'total_value' => $total,
+            'annual_value' => $life > 0 ? $total / $life : $total,
+        ];
+    }
+
+    /**
+     * Avoided Damage Cost — the expected damage cost avoided each year
+     * because the ecosystem protects the area.
+     *
+     *   avoided_cost = protected_area * damage_cost_per_unit * event_probability
+     *
+     * @return array{avoided_cost: float}
+     */
+    public function adcRecordValues(
+        float|int|null $protectedArea,
+        float|int|null $damageCostPerUnit,
+        float|int|null $eventProbability = 1,
+    ): array {
+        return [
+            'avoided_cost' => (float) $protectedArea * (float) $damageCostPerUnit * (float) $eventProbability,
+        ];
+    }
+
+    /**
+     * Benefit Transfer — a source study's per-unit value, adjusted and scaled
+     * to the target site.
+     *
+     *   transferred_value = source_value * adjustment_factor * target_quantity
+     *
+     * @return array{transferred_value: float}
+     */
+    public function btmRecordValues(
+        float|int|null $sourceValue,
+        float|int|null $adjustmentFactor = 1,
+        float|int|null $targetQuantity = 1,
+    ): array {
+        return [
+            'transferred_value' => (float) $sourceValue * (float) $adjustmentFactor * (float) $targetQuantity,
+        ];
+    }
+
+    /**
      * Tabel 1 ecosystem-service record: a per-hectare quantity times a unit
      * price, scaled by area.
      *

@@ -157,7 +157,7 @@ class SampleDataSeeder extends Seeder
             ['direct_use',   'production',           'Hasil hutan non-kayu (madu, rotan)',       12500000000, 'EOP', 'eop'],
             ['indirect_use', 'water_regulation',     'Regulasi air DAS Ujung Kulon',             28000000000, 'RC',  'manual'],
             ['indirect_use', 'carbon_sequestration', 'Penyerapan karbon hutan primer',           35000000000, 'EOP', 'manual'],
-            ['non_use',      'existence_value',      'Nilai keberadaan Badak Jawa',              52000000000, 'CVM', 'cvm'],
+            ['existence_value',      'existence_value',      'Nilai keberadaan Badak Jawa',              52000000000, 'CVM', 'cvm'],
         ]);
 
         // Costs for P1
@@ -186,7 +186,7 @@ class SampleDataSeeder extends Seeder
             ['direct_use',   'tourism',          'Wisata Danau Toba',               85000000000, 'TCM', 'tcm'],
             ['direct_use',   'production',       'Perikanan air tawar',             22000000000, 'EOP', 'eop'],
             ['indirect_use', 'water_regulation', 'Suplai air bersih regional',      42000000000, 'RC',  'manual'],
-            ['non_use',      'existence_value',  'Nilai keberadaan budaya Batak',   38000000000, 'CVM', 'cvm'],
+            ['existence_value',      'existence_value',  'Nilai keberadaan budaya Batak',   38000000000, 'CVM', 'cvm'],
         ]);
 
         $this->seedCosts($p2->id, $adminId, [
@@ -239,8 +239,8 @@ class SampleDataSeeder extends Seeder
             ['direct_use',   'tourism',              'Wisata bahari diving & snorkeling', 120000000000, 'TCM', 'tcm'],
             ['direct_use',   'production',           'Perikanan berkelanjutan',            30000000000, 'EOP', 'eop'],
             ['indirect_use', 'water_regulation',     'Perlindungan pantai dari erosi',     55000000000, 'RC',  'manual'],
-            ['non_use',      'existence_value',      'Keanekaragaman hayati laut',         75000000000, 'CVM', 'cvm'],
-            ['non_use',      'bequest_value',        'Warisan untuk generasi masa depan',  40000000000, 'CVM', 'cvm'],
+            ['existence_value',      'existence_value',      'Keanekaragaman hayati laut',         75000000000, 'CVM', 'cvm'],
+            ['bequest_value',      'bequest_value',        'Warisan untuk generasi masa depan',  40000000000, 'CVM', 'cvm'],
         ]);
 
         $this->seedCosts($p4->id, $adminId, [

@@ -69,7 +69,7 @@ class DemoRegionsSeeder extends Seeder
                 ['direct_use', 'tourism', 'Wisata susur gua dan geosite karst', 32000000000, 'TCM', 'tcm'],
                 ['direct_use', 'production', 'Pertanian lahan karst (jagung, ketela)', 9500000000, 'EOP', 'eop'],
                 ['indirect_use', 'water_regulation', 'Regulasi air tanah sistem akuifer karst', 24000000000, 'RC', 'manual'],
-                ['non_use', 'existence_value', 'Nilai keberadaan bentang alam karst', 21000000000, 'CVM', 'cvm'],
+                ['existence_value', 'existence_value', 'Nilai keberadaan bentang alam karst', 21000000000, 'CVM', 'cvm'],
             ],
             'costs' => [
                 ['direct_cost', 'investment', 'Infrastruktur wisata gua (jalur, penerangan)', 6000000000, 'Investasi Awal'],
@@ -99,8 +99,8 @@ class DemoRegionsSeeder extends Seeder
                 ['direct_use', 'tourism', 'Ekowisata safari & pusat konservasi gajah', 38000000000, 'TCM', 'tcm'],
                 ['direct_use', 'production', 'Perikanan rawa sekitar taman nasional', 6500000000, 'EOP', 'eop'],
                 ['indirect_use', 'carbon_sequestration', 'Serapan karbon hutan rawa gambut', 41000000000, 'RC', 'manual'],
-                ['non_use', 'existence_value', 'Nilai keberadaan Gajah Sumatera', 58000000000, 'CVM', 'cvm'],
-                ['non_use', 'bequest_value', 'Warisan konservasi untuk generasi mendatang', 26000000000, 'CVM', 'manual'],
+                ['existence_value', 'existence_value', 'Nilai keberadaan Gajah Sumatera', 58000000000, 'CVM', 'cvm'],
+                ['bequest_value', 'bequest_value', 'Warisan konservasi untuk generasi mendatang', 26000000000, 'CVM', 'manual'],
             ],
             'costs' => [
                 ['direct_cost', 'operation_maintenance', 'Patroli anti-perburuan & operasional', 17000000000, 'Tahunan'],
@@ -130,7 +130,7 @@ class DemoRegionsSeeder extends Seeder
                 ['direct_use', 'production', 'Perikanan tambak udang & kepiting bakau', 19500000000, 'EOP', 'eop'],
                 ['indirect_use', 'carbon_sequestration', 'Blue carbon ekosistem mangrove', 27000000000, 'RC', 'manual'],
                 ['indirect_use', 'water_regulation', 'Perlindungan pantai dari abrasi & rob', 33000000000, 'RC', 'manual'],
-                ['non_use', 'existence_value', 'Nilai keberadaan ekosistem mangrove', 16000000000, 'CVM', 'cvm'],
+                ['existence_value', 'existence_value', 'Nilai keberadaan ekosistem mangrove', 16000000000, 'CVM', 'cvm'],
             ],
             'costs' => [
                 ['direct_cost', 'investment', 'Rehabilitasi & penanaman mangrove', 7500000000, 'Investasi'],
@@ -160,7 +160,7 @@ class DemoRegionsSeeder extends Seeder
                 ['direct_use', 'production', 'Perikanan air tawar berkelanjutan', 24000000000, 'EOP', 'eop'],
                 ['direct_use', 'tourism', 'Ekowisata lahan basah & pengamatan burung', 14000000000, 'TCM', 'tcm'],
                 ['indirect_use', 'water_regulation', 'Regulasi banjir DAS Kapuas', 46000000000, 'RC', 'manual'],
-                ['non_use', 'existence_value', 'Nilai keberadaan situs Ramsar lahan basah', 29000000000, 'CVM', 'cvm'],
+                ['existence_value', 'existence_value', 'Nilai keberadaan situs Ramsar lahan basah', 29000000000, 'CVM', 'cvm'],
             ],
             'costs' => [
                 ['direct_cost', 'operation_maintenance', 'Pengawasan & operasional taman nasional', 11000000000, 'Tahunan'],
@@ -190,7 +190,7 @@ class DemoRegionsSeeder extends Seeder
                 ['direct_use', 'tourism', 'Wisata selam & snorkeling terumbu karang', 95000000000, 'TCM', 'tcm'],
                 ['direct_use', 'production', 'Perikanan karang berkelanjutan', 15500000000, 'EOP', 'eop'],
                 ['indirect_use', 'water_regulation', 'Perlindungan pantai dari gelombang', 37000000000, 'RC', 'manual'],
-                ['non_use', 'existence_value', 'Keanekaragaman hayati terumbu karang', 62000000000, 'CVM', 'cvm'],
+                ['existence_value', 'existence_value', 'Keanekaragaman hayati terumbu karang', 62000000000, 'CVM', 'cvm'],
             ],
             'costs' => [
                 ['direct_cost', 'operation_maintenance', 'Patroli & operasional kawasan konservasi laut', 18000000000, 'Tahunan'],
@@ -220,8 +220,8 @@ class DemoRegionsSeeder extends Seeder
             'benefits' => [
                 ['direct_use', 'tourism', 'Wisata Danau Kelimutu tiga warna', 41000000000, 'TCM', 'tcm'],
                 ['direct_use', 'production', 'Kopi arabika highland penyangga taman nasional', 11500000000, 'EOP', 'eop'],
-                ['non_use', 'existence_value', 'Nilai keberadaan fenomena danau tiga warna', 34000000000, 'CVM', 'cvm'],
-                ['non_use', 'bequest_value', 'Warisan alam & budaya untuk generasi mendatang', 18000000000, 'CVM', 'manual'],
+                ['existence_value', 'existence_value', 'Nilai keberadaan fenomena danau tiga warna', 34000000000, 'CVM', 'cvm'],
+                ['bequest_value', 'bequest_value', 'Warisan alam & budaya untuk generasi mendatang', 18000000000, 'CVM', 'manual'],
             ],
             'costs' => [
                 ['direct_cost', 'operation_maintenance', 'Operasional & pemeliharaan jalur wisata', 5200000000, 'Tahunan'],

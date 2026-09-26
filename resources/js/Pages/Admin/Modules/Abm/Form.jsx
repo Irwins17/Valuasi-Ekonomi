@@ -3,6 +3,7 @@ import ModuleFormShell from '../../../../Components/modules/ModuleFormShell';
 import FormulaPanel from '../../../../Components/modules/FormulaPanel';
 import OutputPreview from '../../../../Components/modules/OutputPreview';
 import { toNumber } from '../../../../lib/format';
+import { DATA_COLLECTION_TYPES, collectionMethodsFor } from '../../../../lib/dataCollectionTypes';
 
 export default function Form({ project, record, riskTypes, defensiveActions }) {
     const isEdit = Boolean(record);
@@ -24,6 +25,8 @@ export default function Form({ project, record, riskTypes, defensiveActions }) {
         household_size: record?.household_size ?? '',
         affected_population: record?.affected_population ?? '',
         data_source: record?.data_source || '',
+        data_collection_type: record?.data_collection_type || '',
+        collection_method: record?.collection_method || '',
         notes: record?.notes || '',
     });
 
@@ -47,6 +50,8 @@ export default function Form({ project, record, riskTypes, defensiveActions }) {
         { name: 'household_size', label: 'Jumlah Anggota RT', type: 'number', step: '1', placeholder: 'Contoh: 4', suffix: 'orang' },
         { name: 'affected_population', label: 'Total Populasi Terdampak', type: 'number', step: '1', placeholder: 'Contoh: 12000', suffix: 'orang' },
         { name: 'data_source', label: 'Sumber Data', type: 'text', placeholder: 'Contoh: Survei rumah tangga 2026' },
+        { name: 'data_collection_type', label: 'Jenis Data', type: 'select', options: DATA_COLLECTION_TYPES.map((t) => [t.value, t.label]), placeholder: '-- Pilih jenis data --' },
+        { name: 'collection_method', label: 'Metode Pengumpulan', type: 'select', options: collectionMethodsFor(data.data_collection_type).map((m) => [m.value, m.label]), placeholder: '-- Pilih metode --' },
         { name: 'notes', label: 'Catatan (opsional)', type: 'textarea', full: true, maxLength: 500, placeholder: 'Catatan tambahan (opsional)' },
     ];
 

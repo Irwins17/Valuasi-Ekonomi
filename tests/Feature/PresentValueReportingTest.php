@@ -78,7 +78,7 @@ class PresentValueReportingTest extends TestCase
                 'period_year' => 2027, 'data_source' => 'eop', 'method_used' => 'EOP',
             ],
             [
-                'category' => 'non_use', 'subcategory' => 'existence_value',
+                'category' => 'existence_value', 'subcategory' => 'existence_value',
                 'description' => 'WTP masyarakat', 'value' => 1210000,
                 'period_year' => 2028, 'data_source' => 'cvm', 'method_used' => 'CVM',
             ],
@@ -237,7 +237,7 @@ class PresentValueReportingTest extends TestCase
         $expected = $this->expectedBenefitPvs();
 
         $this->assertEqualsWithDelta($expected[0], (float) $categories['direct_use']->total, 0.01);
-        $this->assertEqualsWithDelta($expected[1], (float) $categories['non_use']->total, 0.01);
+        $this->assertEqualsWithDelta($expected[1], (float) $categories['existence_value']->total, 0.01);
 
         // The whole chart adds up to the project's published TEV benefit side.
         $this->assertEqualsWithDelta((float) $project->total_benefits, array_sum($expected), 0.01);

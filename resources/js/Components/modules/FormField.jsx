@@ -92,7 +92,7 @@ export default function FormField({ field, value, onChange, error }) {
     const isNumeric = field.type === 'number' || field.type === 'currency';
     const input = (
         <input
-            type={isNumeric ? 'number' : 'text'}
+            type={isNumeric ? 'number' : field.type === 'date' ? 'date' : 'text'}
             step={isNumeric ? (field.step || 'any') : undefined}
             min={isNumeric && field.allowNegative !== true ? 0 : undefined}
             className="form-input"

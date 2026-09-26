@@ -22,7 +22,8 @@ class DuvData extends Model
         'project_id', 'record_code', 'service_category', 'goods_type', 'location',
         'quantity', 'unit', 'market_price', 'production_cost',
         'gross_value', 'net_value',
-        'period_year', 'data_source', 'data_status', 'notes', 'recorded_by',
+        'period_year', 'data_source', 'data_collection_type', 'collection_method',
+        'data_status', 'notes', 'recorded_by',
     ];
 
     protected $casts = [

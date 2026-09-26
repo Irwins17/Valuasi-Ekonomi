@@ -7,9 +7,11 @@ import Pagination from '../../Components/ui/Pagination';
 import { toNumber, formatTriliun, formatRupiah } from '../../lib/format';
 
 const CATEGORY_COLORS = [
-    ['direct_use', '#6366f1', 'Direct Use'],
-    ['indirect_use', '#06d6a0', 'Indirect Use'],
-    ['non_use', '#f72585', 'Non-Use'],
+    ['direct_use', '#6366f1', 'Direct Use Value'],
+    ['indirect_use', '#06d6a0', 'Indirect Use Value'],
+    ['option_value', '#f59e0b', 'Option Value'],
+    ['existence_value', '#f72585', 'Existence Value'],
+    ['bequest_value', '#8b5cf6', 'Bequest Value'],
 ];
 
 const METHOD_NAMES = { TCM: 'Travel Cost', CVM: 'Contingent Val.', EOP: 'Effect on Prod.' };

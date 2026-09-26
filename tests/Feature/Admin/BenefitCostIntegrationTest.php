@@ -209,7 +209,7 @@ class BenefitCostIntegrationTest extends TestCase
         $this->assertEquals(20000000.0, (float) $cvm->total_wtp);
 
         $this->actingAs($user)->post(route('admin.benefits.store', $project->id), [
-            'category' => 'non_use',
+            'category' => 'existence_value',
             'subcategory' => 'existence_value',
             'ecosystem_service_group' => 'cultural',
             'description' => 'WTP masyarakat — Rehabilitasi mangrove',
@@ -560,7 +560,7 @@ class BenefitCostIntegrationTest extends TestCase
                 'period_year' => 2027, 'data_source' => 'eop',
             ],
             [
-                'category' => 'non_use', 'subcategory' => 'existence_value',
+                'category' => 'existence_value', 'subcategory' => 'existence_value',
                 'description' => 'WTP masyarakat', 'value' => 3000000,
                 'period_year' => 2029, 'data_source' => 'cvm',
             ],

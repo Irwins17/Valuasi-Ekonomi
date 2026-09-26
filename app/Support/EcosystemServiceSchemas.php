@@ -189,6 +189,38 @@ class EcosystemServiceSchemas
             ],
         ],
 
+        'HABITAT' => [
+            'key' => 'HABITAT',
+            'name' => 'Fungsi Habitat & Siklus Hara',
+            'service_category' => 'supporting',
+            'code_prefix' => 'HB',
+            'formula' => 'VHi = Indeks × PHi × LAj',
+            'formula_note' => 'PHi/PNCi = nilai pengganti fungsi per ha per tahun; LAj = luas area fungsi.',
+            'legend' => [
+                ['sym' => 'VHi', 'desc' => 'Nilai fungsi habitat/siklus hara (Rp/tahun)'],
+                ['sym' => 'Indeks', 'desc' => 'Indeks kondisi/fungsi ekosistem (0–1); 1 = berfungsi penuh'],
+                ['sym' => 'PHi/PNCi', 'desc' => 'Nilai pengganti (replacement value) fungsi per ha per tahun'],
+                ['sym' => 'LAj', 'desc' => 'Luas area yang menyediakan fungsi ini (ha)'],
+            ],
+            'quantity' => ['name' => 'quantity_value', 'label' => 'Indeks Kondisi/Fungsi Ekosistem (0–1)', 'suffix' => 'indeks', 'placeholder' => 'Contoh: 1,00 (isi 1 jika berfungsi penuh)'],
+            'price' => ['name' => 'unit_price', 'label' => 'Nilai Pengganti Fungsi per ha per tahun (PHi/PNCi)', 'prefix' => 'Rp', 'placeholder' => 'Contoh: 3.500.000'],
+            'fields' => [
+                ['name' => 'function_type', 'label' => 'Jenis Fungsi', 'type' => 'select', 'required' => true, 'placeholder' => '-- Pilih jenis fungsi --', 'options' => ['Fungsi Habitat / Nursery Ground', 'Siklus Hara / Nutrient Cycling']],
+                ['name' => 'location', 'label' => 'Lokasi / Ekosistem', 'type' => 'text', 'required' => true, 'placeholder' => 'Contoh: Mangrove pesisir, terumbu karang, padang lamun'],
+                ['name' => '@quantity'],
+                ['name' => 'area_ha', 'label' => 'Luas Area Fungsi (LAj)', 'type' => 'number', 'required' => true, 'placeholder' => 'Contoh: 40,00', 'suffix' => 'ha'],
+                ['name' => '@price'],
+                ['name' => 'quantity_unit', 'label' => 'Satuan Indeks', 'type' => 'text', 'required' => false, 'placeholder' => 'indeks (0–1)'],
+                ['name' => 'period_year', 'label' => 'Periode / Tahun', 'type' => 'year', 'required' => true, 'placeholder' => self::YEAR_HINT],
+                ['name' => 'data_source', 'label' => 'Sumber Data', 'type' => 'text', 'required' => true, 'full' => true, 'placeholder' => 'Contoh: Studi ekologi, model InVEST, literatur pengganti biaya'],
+            ],
+            'outputs' => [
+                ['label' => 'Nilai per ha', 'sublabel' => 'Indeks × PHi', 'source' => 'value_per_ha', 'format' => 'currency', 'unit' => 'per ha/tahun', 'color' => '#8b5cf6'],
+                ['label' => 'Luas Area Fungsi', 'sublabel' => 'LAj', 'source' => 'quantity_area', 'format' => 'number', 'unit' => 'ha', 'color' => '#f59e0b'],
+                ['label' => 'Nilai Ekonomi Fungsi Habitat & Siklus Hara', 'sublabel' => 'Indeks × PHi × LAj', 'source' => 'total_value', 'format' => 'currency', 'unit' => 'Rp/tahun', 'color' => '#10b981'],
+            ],
+        ],
+
         'WATER' => [
             'key' => 'WATER',
             'name' => 'Water Supply',

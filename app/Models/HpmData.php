@@ -18,7 +18,8 @@ class HpmData extends Model
         'bedrooms', 'land_area', 'building_area', 'building_age',
         'accessibility', 'crime_rate', 'school_quality',
         'air_quality_index', 'pollutant_concentration', 'noise_level', 'distance_green_space',
-        'delta_env_quality', 'affected_units', 'data_source', 'notes', 'recorded_by',
+        'delta_env_quality', 'affected_units', 'data_source', 'data_collection_type', 'collection_method',
+        'notes', 'recorded_by',
     ];
 
     protected $casts = [

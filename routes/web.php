@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\EnvironmentalCoefficientController;
 use App\Http\Controllers\Admin\MarketPriceController;
 use App\Http\Controllers\Admin\Modules\AbmController;
+use App\Http\Controllers\Admin\Modules\AdcController;
+use App\Http\Controllers\Admin\Modules\BtmController;
 use App\Http\Controllers\Admin\Modules\CeController;
 use App\Http\Controllers\Admin\Modules\CvmAnalysisController;
 use App\Http\Controllers\Admin\Modules\CvmController;
@@ -15,12 +17,15 @@ use App\Http\Controllers\Admin\Modules\HpmController;
 use App\Http\Controllers\Admin\Modules\DuvController;
 use App\Http\Controllers\Admin\Modules\EcosystemServiceController;
 use App\Http\Controllers\Admin\Modules\EopController;
+use App\Http\Controllers\Admin\Modules\RcmController;
 use App\Http\Controllers\Admin\Modules\TcmAnalysisController;
 use App\Http\Controllers\Admin\Modules\TcmController;
 use App\Http\Controllers\Admin\Modules\ValuationModuleController;
+use App\Http\Controllers\Admin\ProjectAssumptionController;
 use App\Http\Controllers\Admin\ProjectController;
 use App\Http\Controllers\Admin\ProjectValuationSettingController;
 use App\Http\Controllers\Admin\SensitivityController;
+use App\Http\Controllers\Admin\StakeholderValidationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Public\LandingController;
@@ -84,6 +89,24 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/costs/{costId}', [CostController::class, 'destroy'])->name('admin.costs.destroy');
     });
 
+    // Uji Asumsi & Validasi Stakeholder (Langkah 9) — admin + analyst, same
+    // access as Sensitivity Analysis since these are QA/verification steps.
+    Route::middleware(['role:admin,analyst'])->prefix('/admin/projects/{projectId}')->group(function () {
+        Route::get('/assumptions', [ProjectAssumptionController::class, 'index'])->name('admin.assumptions.index');
+        Route::get('/assumptions/create', [ProjectAssumptionController::class, 'create'])->name('admin.assumptions.create');
+        Route::post('/assumptions', [ProjectAssumptionController::class, 'store'])->name('admin.assumptions.store');
+        Route::get('/assumptions/{id}/edit', [ProjectAssumptionController::class, 'edit'])->name('admin.assumptions.edit');
+        Route::put('/assumptions/{id}', [ProjectAssumptionController::class, 'update'])->name('admin.assumptions.update');
+        Route::delete('/assumptions/{id}', [ProjectAssumptionController::class, 'destroy'])->name('admin.assumptions.destroy');
+
+        Route::get('/stakeholder-validations', [StakeholderValidationController::class, 'index'])->name('admin.stakeholder-validations.index');
+        Route::get('/stakeholder-validations/create', [StakeholderValidationController::class, 'create'])->name('admin.stakeholder-validations.create');
+        Route::post('/stakeholder-validations', [StakeholderValidationController::class, 'store'])->name('admin.stakeholder-validations.store');
+        Route::get('/stakeholder-validations/{id}/edit', [StakeholderValidationController::class, 'edit'])->name('admin.stakeholder-validations.edit');
+        Route::put('/stakeholder-validations/{id}', [StakeholderValidationController::class, 'update'])->name('admin.stakeholder-validations.update');
+        Route::delete('/stakeholder-validations/{id}', [StakeholderValidationController::class, 'destroy'])->name('admin.stakeholder-validations.destroy');
+    });
+
     // Module registry — the "Modul Valuasi" list plus custom module CRUD.
     // Registered before the per-method groups below; its only wildcard route
     // requires a literal "configure"/verb match, so it cannot shadow them.
@@ -104,6 +127,9 @@ Route::middleware(['auth'])->group(function () {
         'hpm' => [HpmController::class, 'hpmId'],
         'abm' => [AbmController::class, 'abmId'],
         'ce' => [CeController::class, 'ceId'],
+        'rcm' => [RcmController::class, 'rcmId'],
+        'adc' => [AdcController::class, 'adcId'],
+        'btm' => [BtmController::class, 'btmId'],
     ] as $slug => [$controller, $param]) {
         Route::prefix("/admin/projects/{projectId}/modules/{$slug}")->group(function () use ($controller, $slug, $param) {
             Route::get('/', [$controller, 'index'])->name("admin.modules.{$slug}.index");

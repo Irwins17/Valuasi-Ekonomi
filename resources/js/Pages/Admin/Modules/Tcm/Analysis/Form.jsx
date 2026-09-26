@@ -4,6 +4,7 @@ import ModuleFormShell from '../../../../../Components/modules/ModuleFormShell';
 import FormulaPanel from '../../../../../Components/modules/FormulaPanel';
 import OutputPreview from '../../../../../Components/modules/OutputPreview';
 import { formatRupiah, toNumber } from '../../../../../lib/format';
+import { DATA_COLLECTION_TYPES, collectionMethodsFor } from '../../../../../lib/dataCollectionTypes';
 
 export default function Form({ project, analysis, models, covariateOptions, respondentCount, minRespondents }) {
     const isEdit = Boolean(analysis);
@@ -34,6 +35,8 @@ export default function Form({ project, analysis, models, covariateOptions, resp
         diagnostics: analysis?.diagnostics || null,
         period_year: analysis?.period_year ?? '',
         data_source: analysis?.data_source || '',
+        data_collection_type: analysis?.data_collection_type || '',
+        collection_method: analysis?.collection_method || '',
         notes: analysis?.notes || '',
     });
 
@@ -97,6 +100,8 @@ export default function Form({ project, analysis, models, covariateOptions, resp
         { name: 'estimation_method', label: 'Metode Estimasi', type: 'text', placeholder: 'Contoh: IRLS poisson' },
         { name: 'period_year', label: 'Periode / Tahun', type: 'year' },
         { name: 'data_source', label: 'Sumber Data', type: 'text', placeholder: 'Contoh: Survei pengunjung 2026' },
+        { name: 'data_collection_type', label: 'Jenis Data', type: 'select', options: DATA_COLLECTION_TYPES.map((t) => [t.value, t.label]), placeholder: '-- Pilih jenis data --' },
+        { name: 'collection_method', label: 'Metode Pengumpulan', type: 'select', options: collectionMethodsFor(data.data_collection_type).map((m) => [m.value, m.label]), placeholder: '-- Pilih metode --' },
         { name: 'notes', label: 'Catatan (opsional)', type: 'textarea', full: true, maxLength: 500 },
     ];
 

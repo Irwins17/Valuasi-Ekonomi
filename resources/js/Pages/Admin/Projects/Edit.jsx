@@ -1,6 +1,7 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import AdminLayout from '../../../Layouts/AdminLayout';
 import BoundarySourcePicker from '../../../Components/map/BoundarySourcePicker';
+import { ECOSYSTEM_OBJECT_TYPES } from '../../../lib/ecosystemObjectTypes';
 
 const STATUSES = ['draft', 'in_progress', 'completed', 'published'];
 
@@ -10,6 +11,7 @@ export default function Edit({ project }) {
         description: project.description || '',
         location: project.location || '',
         province: project.province || '',
+        ecosystem_object_type: project.ecosystem_object_type || '',
         status: project.status,
         latitude: project.latitude ?? '',
         longitude: project.longitude ?? '',
@@ -45,6 +47,17 @@ export default function Edit({ project }) {
                             <textarea value={data.description} onChange={(e) => setData('description', e.target.value)} className="form-input" rows={4} />
                         </div>
                         <div className="form-group">
+                            <label className="form-label">Jenis Objek Ekosistem</label>
+                            <select value={data.ecosystem_object_type} onChange={(e) => setData('ecosystem_object_type', e.target.value)} className="form-input">
+                                <option value="">-- Pilih jenis objek ekosistem --</option>
+                                {ECOSYSTEM_OBJECT_TYPES.map((t) => (
+                                    <option key={t.value} value={t.value}>{t.label}</option>
+                                ))}
+                            </select>
+                            {errors.ecosystem_object_type && <p className="form-error">{errors.ecosystem_object_type}</p>}
+                        </div>
+
+                        <div className="form-group">
                             <label className="form-label">Status</label>
                             <select value={data.status} onChange={(e) => setData('status', e.target.value)} className="form-input">
                                 {STATUSES.map((s) => (
@@ -59,7 +72,7 @@ export default function Edit({ project }) {
                                 value={data.boundary_geojson}
                                 province={data.province}
                                 onProvinceChange={(name) => setData('province', name)}
-                                height={420}
+                                height={560}
                                 onParsed={(geojson, centroid, label) => {
                                     setData('boundary_geojson', geojson);
                                     setData('latitude', centroid.lat.toFixed(6));

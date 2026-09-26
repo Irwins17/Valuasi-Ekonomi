@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\TcmAnalysis;
 use App\Models\TcmData;
 use App\Services\Valuation\TravelCostEstimator;
+use App\Support\DataCollectionTypes;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -169,6 +170,8 @@ class TcmAnalysisController extends Controller
             'diagnostics' => ['nullable', 'array'],
             'period_year' => ['nullable', 'integer', 'min:1900', 'max:2200'],
             'data_source' => ['nullable', 'string', 'max:255'],
+            'data_collection_type' => ['nullable', Rule::in(array_keys(DataCollectionTypes::TYPES))],
+            'collection_method' => ['nullable', Rule::in(DataCollectionTypes::allMethodCodes())],
             'notes' => ['nullable', 'string', 'max:500'],
         ], [], [
             'analysis_code' => 'ID Analisis',

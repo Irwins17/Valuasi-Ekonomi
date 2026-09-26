@@ -8,6 +8,7 @@ use App\Models\EopData;
 use App\Models\MarketPrice;
 use App\Models\Project;
 use App\Services\Valuation\EconomicValuationCalculator;
+use App\Support\DataCollectionTypes;
 use App\Support\ValuationModuleCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -164,6 +165,8 @@ class EopController extends Controller
             'area_ha' => ['nullable', 'numeric', 'min:0'],
             'period_year' => ['nullable', 'integer', 'min:1900', 'max:2200'],
             'data_source' => ['nullable', 'string', 'max:255'],
+            'data_collection_type' => ['nullable', Rule::in(array_keys(DataCollectionTypes::TYPES))],
+            'collection_method' => ['nullable', Rule::in(DataCollectionTypes::allMethodCodes())],
             'impact_type' => ['required', 'in:positive,negative'],
             'notes' => ['nullable', 'string', 'max:500'],
         ], [], [

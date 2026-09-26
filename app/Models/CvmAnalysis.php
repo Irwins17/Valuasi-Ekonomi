@@ -19,7 +19,8 @@ class CvmAnalysis extends Model
         'question_type', 'bid_value', 'respondent_count', 'yes_count', 'no_count',
         'alpha', 'beta_bid', 'coef_income', 'coef_education', 'coef_age',
         'mean_covariates', 'target_population', 'converged', 'log_likelihood',
-        'diagnostics', 'period_year', 'data_source', 'notes', 'created_by',
+        'diagnostics', 'period_year', 'data_source', 'data_collection_type', 'collection_method',
+        'notes', 'created_by',
     ];
 
     protected $casts = [

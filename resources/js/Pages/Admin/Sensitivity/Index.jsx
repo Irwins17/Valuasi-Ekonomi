@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import AdminLayout from '../../../Layouts/AdminLayout';
 import BarChart from '../../../Components/charts/BarChart';
 import { toNumber } from '../../../lib/format';
@@ -47,8 +47,8 @@ export default function Index({ projects }) {
     const bcrPct = toNumber(result?.changes?.bcr_pct);
 
     return (
-        <AdminLayout title="Analisis Sensitivitas" subtitle="Simulasi perubahan variabel terhadap TEV">
-            <Head title="Analisis Sensitivitas" />
+        <AdminLayout title="Analisis Sensitivitas dan Validasi" subtitle="Langkah 9 — Uji Sensitivitas, Uji Asumsi, Validasi Stakeholder">
+            <Head title="Analisis Sensitivitas dan Validasi" />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 24 }} className="animate-fade-up">
                 <div className="card" style={{ position: 'sticky', top: 100, alignSelf: 'start' }}>
@@ -63,6 +63,13 @@ export default function Index({ projects }) {
                             ))}
                         </select>
                     </div>
+
+                    {projectId && (
+                        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20 }}>
+                            <Link href={route('admin.assumptions.index', projectId)} className="btn btn-sm btn-outline" style={{ flex: 1 }}>Uji Asumsi</Link>
+                            <Link href={route('admin.stakeholder-validations.index', projectId)} className="btn btn-sm btn-outline" style={{ flex: 1 }}>Validasi Stakeholder</Link>
+                        </div>
+                    )}
 
                     <div className="form-group">
                         <label className="form-label">Tingkat Inflasi: <span>{inflation}</span>%</label>

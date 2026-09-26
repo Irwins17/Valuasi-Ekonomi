@@ -23,7 +23,7 @@ class AbmData extends Model
         'defensive_action', 'defensive_goods', 'quantity', 'unit_price', 'time_cost',
         'medical_cost', 'sick_days', 'daily_wage', 'household_size', 'affected_population',
         'defensive_expenditure', 'lost_income', 'total_avoidance',
-        'data_source', 'notes', 'recorded_by',
+        'data_source', 'data_collection_type', 'collection_method', 'notes', 'recorded_by',
     ];
 
     protected $casts = [

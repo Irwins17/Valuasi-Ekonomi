@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\Valuation\EconomicValuationCalculator;
+use App\Support\RawJson;
 use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +16,7 @@ class Project extends Model
     use SoftDeletes, Auditable;
 
     protected $fillable = [
-        'code', 'name', 'description', 'location', 'province', 'latitude', 'longitude',
+        'code', 'name', 'description', 'location', 'province', 'ecosystem_object_type', 'latitude', 'longitude',
         'boundary_geojson', 'created_by', 'updated_by', 'status', 'started_at', 'ended_at',
         'tev', 'total_benefits', 'total_costs', 'bcr', 'notes'
     ];
@@ -31,6 +32,21 @@ class Project extends Model
         'longitude' => 'decimal:8',
         'boundary_geojson' => 'array',
     ];
+
+    /**
+     * Attributes for an Inertia page prop, with the boundary polygon shielded
+     * from the prop resolver's deep walk — see App\Support\RawJson. The shape
+     * the page component receives is identical to `$project` itself.
+     *
+     * @return array<string, mixed>
+     */
+    public function toInertiaArray(): array
+    {
+        return [
+            ...$this->toArray(),
+            'boundary_geojson' => RawJson::wrap($this->boundary_geojson),
+        ];
+    }
 
     public function creator(): BelongsTo
     {
@@ -65,6 +81,31 @@ class Project extends Model
     public function ceData(): HasMany
     {
         return $this->hasMany(CeData::class);
+    }
+
+    public function rcmData(): HasMany
+    {
+        return $this->hasMany(RcmData::class);
+    }
+
+    public function adcData(): HasMany
+    {
+        return $this->hasMany(AdcData::class);
+    }
+
+    public function btmData(): HasMany
+    {
+        return $this->hasMany(BtmData::class);
+    }
+
+    public function assumptions(): HasMany
+    {
+        return $this->hasMany(ProjectAssumption::class);
+    }
+
+    public function stakeholderValidations(): HasMany
+    {
+        return $this->hasMany(StakeholderValidation::class);
     }
 
     public function ecosystemServiceRecords(): HasMany

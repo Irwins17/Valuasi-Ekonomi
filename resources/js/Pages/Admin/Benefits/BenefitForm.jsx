@@ -8,16 +8,25 @@ import { VALUATION_TECHNIQUES } from '../../../data/valuationTechniques';
 import { presentValue } from '../../../lib/valuation';
 
 const CATEGORIES = [
-    ['direct_use', 'Direct Use'],
-    ['indirect_use', 'Indirect Use'],
-    ['non_use', 'Non-Use'],
+    ['direct_use', 'Direct Use Value'],
+    ['indirect_use', 'Indirect Use Value'],
+    ['option_value', 'Option Value'],
+    ['existence_value', 'Existence Value'],
+    ['bequest_value', 'Bequest Value'],
 ];
-const SUBCATEGORIES = ['production', 'tourism', 'recreation', 'water_regulation', 'carbon_sequestration', 'existence_value', 'bequest_value'];
+const SUBCATEGORIES = ['production', 'tourism', 'recreation', 'water_regulation', 'carbon_sequestration'];
 const LEGACY_METHODS = ['RC', 'Manual'];
 const DATA_SOURCES = [
     ['eop', 'EOP'],
     ['tcm', 'TCM'],
     ['cvm', 'CVM'],
+    ['duv', 'DUV — Nilai Pasar'],
+    ['hpm', 'HPM'],
+    ['abm', 'ABM'],
+    ['ce', 'CE'],
+    ['rcm', 'RCM — Replacement Cost'],
+    ['adc', 'ADC — Avoided Damage Cost'],
+    ['btm', 'BTM — Benefit Transfer'],
     ['manual', 'Manual'],
     ['literature', 'Literatur'],
 ];
@@ -36,6 +45,13 @@ const DATA_SOURCE_FOR_MODULE = {
     eop: 'eop',
     tcm: 'tcm',
     cvm: 'cvm',
+    duv: 'duv',
+    hpm: 'hpm',
+    abm: 'abm',
+    ce: 'ce',
+    rcm: 'rcm',
+    adc: 'adc',
+    btm: 'btm',
 };
 
 /** Shared create/edit form for a project benefit. */

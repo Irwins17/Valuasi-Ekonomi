@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DuvData;
 use App\Models\Project;
 use App\Services\Valuation\EconomicValuationCalculator;
+use App\Support\DataCollectionTypes;
 use App\Support\ValuationModuleCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -136,6 +137,8 @@ class DuvController extends Controller
             'production_cost' => ['nullable', 'numeric', 'min:0'],
             'period_year' => ['required', 'integer', 'min:1900', 'max:2200'],
             'data_source' => ['required', 'string', 'max:255'],
+            'data_collection_type' => ['nullable', Rule::in(array_keys(DataCollectionTypes::TYPES))],
+            'collection_method' => ['nullable', Rule::in(DataCollectionTypes::allMethodCodes())],
             'data_status' => ['required', Rule::in(array_keys(self::STATUSES))],
             'notes' => ['nullable', 'string', 'max:500'],
         ], [], [

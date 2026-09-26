@@ -3,6 +3,7 @@ import ModuleFormShell from '../../../../Components/modules/ModuleFormShell';
 import FormulaPanel from '../../../../Components/modules/FormulaPanel';
 import OutputPreview from '../../../../Components/modules/OutputPreview';
 import { toNumber } from '../../../../lib/format';
+import { DATA_COLLECTION_TYPES, collectionMethodsFor } from '../../../../lib/dataCollectionTypes';
 
 /**
  * Shared EOP form for both create and edit.
@@ -27,6 +28,8 @@ export default function EopForm({ project, eopData, serviceCategories }) {
         area_ha: eopData?.area_ha ?? '',
         period_year: eopData?.period_year ?? '',
         data_source: eopData?.data_source || '',
+        data_collection_type: eopData?.data_collection_type || '',
+        collection_method: eopData?.collection_method || '',
         impact_type: eopData?.impact_type || 'positive',
         notes: eopData?.notes || '',
     });
@@ -52,6 +55,8 @@ export default function EopForm({ project, eopData, serviceCategories }) {
             hint: 'Dampak positif otomatis dicatat sebagai manfaat proyek.',
         },
         { name: 'data_source', label: 'Sumber Data', type: 'text', placeholder: 'Contoh: Survei lapangan, data produksi, literatur' },
+        { name: 'data_collection_type', label: 'Jenis Data', type: 'select', options: DATA_COLLECTION_TYPES.map((t) => [t.value, t.label]), placeholder: '-- Pilih jenis data --' },
+        { name: 'collection_method', label: 'Metode Pengumpulan', type: 'select', options: collectionMethodsFor(data.data_collection_type).map((m) => [m.value, m.label]), placeholder: '-- Pilih metode --' },
         { name: 'notes', label: 'Keterangan (opsional)', type: 'textarea', full: true, maxLength: 500, placeholder: 'Keterangan tambahan (opsional)' },
     ];
 

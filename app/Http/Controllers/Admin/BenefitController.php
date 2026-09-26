@@ -118,7 +118,7 @@ class BenefitController extends Controller
     private function validateBenefit(Request $request, Project $project): array
     {
         $validated = $request->validate([
-            'category' => ['required', 'in:direct_use,indirect_use,non_use'],
+            'category' => ['required', 'in:direct_use,indirect_use,option_value,existence_value,bequest_value'],
             'subcategory' => ['required'],
             'ecosystem_service_group' => ['nullable', Rule::in(array_keys(ValuationModuleCatalog::SERVICE_CATEGORIES))],
             'description' => ['required', 'string'],
@@ -127,7 +127,7 @@ class BenefitController extends Controller
             'unit' => ['nullable', 'string', 'max:60'],
             'period_year' => ['nullable', 'integer', 'min:1900', 'max:2200'],
             'method_used' => ['nullable', 'string'],
-            'data_source' => ['required', 'in:eop,tcm,cvm,manual,literature'],
+            'data_source' => ['required', 'in:eop,tcm,cvm,duv,hpm,abm,ce,rcm,adc,btm,manual,literature'],
             'source_module' => ['nullable', Rule::in(array_keys(ModuleBenefitSources::MODULES))],
             // Required for every real module, but not for "manual" — that option
             // exists precisely to say "this figure has no module record behind

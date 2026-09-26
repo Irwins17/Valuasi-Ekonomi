@@ -2,6 +2,7 @@ import { useForm } from '@inertiajs/react';
 import ModuleFormShell from '../../../../Components/modules/ModuleFormShell';
 import FormulaPanel from '../../../../Components/modules/FormulaPanel';
 import OutputPreview from '../../../../Components/modules/OutputPreview';
+import { DATA_COLLECTION_TYPES, collectionMethodsFor } from '../../../../lib/dataCollectionTypes';
 
 export default function Form({ project, record, propertyTypes, scales }) {
     const isEdit = Boolean(record);
@@ -26,6 +27,8 @@ export default function Form({ project, record, propertyTypes, scales }) {
         delta_env_quality: record?.delta_env_quality ?? '',
         affected_units: record?.affected_units ?? '',
         data_source: record?.data_source || '',
+        data_collection_type: record?.data_collection_type || '',
+        collection_method: record?.collection_method || '',
         notes: record?.notes || '',
     });
 
@@ -48,6 +51,8 @@ export default function Form({ project, record, propertyTypes, scales }) {
         { name: 'delta_env_quality', label: 'Perubahan Kualitas Lingkungan (ΔE)', type: 'number', allowNegative: true, placeholder: 'Contoh: 0.15', hint: 'Dipakai menghitung nilai agregat.' },
         { name: 'affected_units', label: 'Jumlah Unit Terdampak (M)', type: 'number', step: '1', placeholder: 'Contoh: 120', suffix: 'unit' },
         { name: 'data_source', label: 'Sumber Data', type: 'text', placeholder: 'Contoh: Data transaksi BPN, survei agen properti' },
+        { name: 'data_collection_type', label: 'Jenis Data', type: 'select', options: DATA_COLLECTION_TYPES.map((t) => [t.value, t.label]), placeholder: '-- Pilih jenis data --' },
+        { name: 'collection_method', label: 'Metode Pengumpulan', type: 'select', options: collectionMethodsFor(data.data_collection_type).map((m) => [m.value, m.label]), placeholder: '-- Pilih metode --' },
         { name: 'notes', label: 'Catatan (Opsional)', type: 'textarea', full: true, maxLength: 500, placeholder: 'Catatan tambahan terkait properti / unit yang dianalisis (opsional)' },
     ];
 

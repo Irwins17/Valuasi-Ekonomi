@@ -5,6 +5,7 @@ import Pagination from '../../../Components/ui/Pagination';
 import ConfirmDeleteButton from '../../../Components/ui/ConfirmDeleteButton';
 import FormField from '../../../Components/modules/FormField';
 import { formatTriliun, formatRupiah, toNumber } from '../../../lib/format';
+import { ecosystemObjectTypeLabel } from '../../../lib/ecosystemObjectTypes';
 
 const SERVICE_CATEGORY_LABELS = {
     provisioning: 'Provisioning',
@@ -106,6 +107,9 @@ const MODULE_ICONS = {
     HPM: <><path d="M3 3v18h18" /><rect x="7" y="12" width="3" height="6" /><rect x="12" y="8" width="3" height="10" /><rect x="17" y="5" width="3" height="13" /></>,
     ABM: <><circle cx="12" cy="5" r="2" /><circle cx="5" cy="18" r="2" /><circle cx="19" cy="18" r="2" /><path d="M12 7v4M12 11l-5.5 5M12 11l5.5 5" /></>,
     CE: <><path d="M9 2v6L4 20a2 2 0 002 2h12a2 2 0 002-2L15 8V2" /><path d="M9 2h6" /><path d="M7 16h10" /></>,
+    RCM: <><path d="M3 21h18" /><path d="M5 21V7l7-4 7 4v14" /><path d="M9 21v-6h6v6" /></>,
+    ADC: <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9.5 12l1.8 1.8L14.5 10" /></>,
+    BTM: <><path d="M17 1l4 4-4 4" /><path d="M3 11V9a4 4 0 014-4h14" /><path d="M7 23l-4-4 4-4" /><path d="M21 13v2a4 4 0 01-4 4H3" /></>,
     CLIMATE: <><path d="M17.5 19a4.5 4.5 0 00.5-8.98A6 6 0 006 9.5a4.5 4.5 0 00.5 9.5z" /><path d="M8 19v2M12 19v3M16 19v2" /></>,
     EROSION: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />,
     WATER: <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z" />,
@@ -458,7 +462,9 @@ export default function Show({
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
                 <Link href={route('admin.projects.index')} style={{ color: 'var(--text-muted)', textDecoration: 'none', fontSize: 13 }}>← Kembali ke Daftar Proyek</Link>
                 {canManage && (
-                    <div style={{ display: 'flex', gap: 8 }}>
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                        <Link href={route('admin.assumptions.index', project.id)} className="btn btn-sm btn-outline">Uji Asumsi</Link>
+                        <Link href={route('admin.stakeholder-validations.index', project.id)} className="btn btn-sm btn-outline">Validasi Stakeholder</Link>
                         <form onSubmit={calculateTev} style={{ display: 'inline' }}>
                             <button type="submit" className="btn btn-sm btn-secondary">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" /></svg>
@@ -472,6 +478,18 @@ export default function Show({
                     </div>
                 )}
             </div>
+
+            {project.ecosystem_object_type && (
+                <div style={{ marginBottom: 20 }}>
+                    <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 600,
+                        background: 'var(--primary-light, #eef2ff)', color: 'var(--primary)',
+                    }}>
+                        Objek Ekosistem: {ecosystemObjectTypeLabel(project.ecosystem_object_type)}
+                    </span>
+                </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 28 }}>
                 <div className="stat-card" style={{ textAlign: 'center' }}>

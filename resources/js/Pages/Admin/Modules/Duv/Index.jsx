@@ -12,17 +12,17 @@ export default function Index({ project, records, totals, statuses }) {
 
     return (
         <ModuleIndexShell
-            title="Data Direct Use Value"
+            title="Data Nilai Pasar (Market Price)"
             projectName={project.name}
             backHref={route('admin.modules.index', project.id)}
             backLabel="Kembali ke Modul Valuasi"
             createHref={route('admin.modules.duv.create', project.id)}
-            createLabel="Tambah Data DUV"
+            createLabel="Tambah Data"
             canManage={canManage}
-            cardTitle="Data Direct Use Value"
-            cardSubtitle="DUV gross = Σ(Qi × Pi) · DUV net = Σ(Qi × Pi) − Ci"
+            cardTitle="Data Nilai Pasar (Market Price)"
+            cardSubtitle="Metode ini mengisi kategori Direct Use Value · Gross = Σ(Qi × Pi) · Net = Σ(Qi × Pi) − Ci"
             isEmpty={!records.data.length}
-            emptyText="Belum ada data Direct Use Value."
+            emptyText="Belum ada data Nilai Pasar (Market Price)."
             stats={[
                 { label: 'Jumlah Data', value: totals.records, unit: 'record', color: 'var(--primary)' },
                 { label: 'Gross DUV', value: totals.gross, format: 'currency', unit: 'Σ(Qi × Pi)', color: 'var(--info)' },

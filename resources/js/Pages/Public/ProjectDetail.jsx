@@ -151,7 +151,7 @@ export default function ProjectDetail({ project, benefits, costs, valuationSetti
                                         center={project.latitude && project.longitude ? [toNumber(project.latitude), toNumber(project.longitude)] : null}
                                         zoom={12}
                                         label={project.name}
-                                        height={220}
+                                        height={340}
                                         style={{ borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}
                                     />
                                 </div>

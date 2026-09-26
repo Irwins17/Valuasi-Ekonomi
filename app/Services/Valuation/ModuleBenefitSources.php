@@ -3,11 +3,14 @@
 namespace App\Services\Valuation;
 
 use App\Models\AbmData;
+use App\Models\AdcData;
+use App\Models\BtmData;
 use App\Models\CvmAnalysis;
 use App\Models\DuvData;
 use App\Models\EcosystemServiceRecord;
 use App\Models\EopData;
 use App\Models\Project;
+use App\Models\RcmData;
 use App\Models\TcmAnalysis;
 use App\Support\EcosystemServiceSchemas;
 
@@ -29,10 +32,13 @@ class ModuleBenefitSources
     /** Modules that can supply a benefit, in the order they are offered. */
     public const MODULES = [
         'eop' => 'EOP — Effect on Production',
-        'duv' => 'DUV — Direct Use Value',
+        'duv' => 'DUV — Nilai Pasar (Market Price)',
         'tcm' => 'TCM — Analisis Nilai Rekreasi',
         'cvm' => 'CVM — Analisis WTP',
         'abm' => 'ABM — Defensive Expenditure',
+        'rcm' => 'RCM — Replacement Cost',
+        'adc' => 'ADC — Avoided Damage Cost',
+        'btm' => 'BTM — Benefit Transfer',
         'ecosystem_service' => 'Jasa Ekosistem (Tabel 1)',
         'manual' => 'Input manual (tanpa modul)',
     ];
@@ -48,6 +54,9 @@ class ModuleBenefitSources
             'tcm' => $this->tcm($project),
             'cvm' => $this->cvm($project),
             'abm' => $this->abm($project),
+            'rcm' => $this->rcm($project),
+            'adc' => $this->adc($project),
+            'btm' => $this->btm($project),
             'ecosystem_service' => $this->ecosystemService($project),
         ];
     }
@@ -160,7 +169,7 @@ class ModuleBenefitSources
                 'period_year' => $row->period_year,
                 'unit' => 'Rp/tahun',
                 'ecosystem_service_group' => 'cultural',
-                'category' => 'non_use',
+                'category' => 'existence_value',
                 'subcategory' => 'existence_value',
                 'method_used' => 'CVM',
                 'detail' => 'Mean WTP × populasi',
@@ -186,6 +195,72 @@ class ModuleBenefitSources
                 'subcategory' => 'water_regulation',
                 'method_used' => 'ABM',
                 'detail' => 'Biaya defensif + medis + pendapatan hilang',
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function rcm(Project $project): array
+    {
+        return RcmData::where('project_id', $project->id)
+            ->get()
+            ->map(fn (RcmData $row) => [
+                'id' => $row->id,
+                'label' => "{$row->record_code} — {$row->asset_type}",
+                'description' => 'Replacement cost — '.$row->asset_type,
+                'value' => (float) $row->annual_value,
+                'annual_value' => (float) $row->annual_value,
+                'period_year' => $row->period_year,
+                'unit' => $row->unit,
+                'ecosystem_service_group' => $row->service_category,
+                'category' => 'indirect_use',
+                'subcategory' => 'water_regulation',
+                'method_used' => 'RCM',
+                'detail' => 'Nilai total ÷ umur manfaat',
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function adc(Project $project): array
+    {
+        return AdcData::where('project_id', $project->id)
+            ->get()
+            ->map(fn (AdcData $row) => [
+                'id' => $row->id,
+                'label' => "{$row->record_code} — {$row->damage_type}",
+                'description' => 'Kerusakan dihindari — '.$row->damage_type,
+                'value' => (float) $row->avoided_cost,
+                'annual_value' => (float) $row->avoided_cost,
+                'period_year' => $row->period_year,
+                'unit' => 'Rp/tahun',
+                'ecosystem_service_group' => $row->service_category,
+                'category' => 'indirect_use',
+                'subcategory' => 'water_regulation',
+                'method_used' => 'ADC',
+                'detail' => 'Luas terlindungi × biaya kerusakan × probabilitas',
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function btm(Project $project): array
+    {
+        return BtmData::where('project_id', $project->id)
+            ->get()
+            ->map(fn (BtmData $row) => [
+                'id' => $row->id,
+                'label' => "{$row->record_code} — {$row->source_study_title}",
+                'description' => 'Transfer nilai — '.$row->source_study_title,
+                'value' => (float) $row->transferred_value,
+                'annual_value' => (float) $row->transferred_value,
+                'period_year' => $row->period_year,
+                'unit' => null,
+                'ecosystem_service_group' => $row->service_category,
+                'category' => 'indirect_use',
+                'subcategory' => 'production',
+                'method_used' => 'BTM',
+                'detail' => 'Nilai studi sumber × faktor penyesuaian × kuantitas target',
             ])
             ->values()
             ->all();
@@ -224,7 +299,7 @@ class ModuleBenefitSources
         return match ($serviceKey) {
             'FOOD', 'RAWMAT', 'GENRES' => 'production',
             'CLIMATE' => 'carbon_sequestration',
-            'WATER', 'EROSION' => 'water_regulation',
+            'WATER', 'EROSION', 'HABITAT' => 'water_regulation',
             default => 'production',
         };
     }

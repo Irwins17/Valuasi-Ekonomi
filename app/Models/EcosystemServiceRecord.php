@@ -21,7 +21,8 @@ class EcosystemServiceRecord extends Model
         'project_id', 'service_key', 'service_category', 'record_code', 'location',
         'quantity_value', 'quantity_unit', 'unit_price', 'price_conversion',
         'area_ha', 'output_unit', 'value_per_ha', 'total_value',
-        'period_year', 'data_source', 'extra', 'notes', 'recorded_by',
+        'period_year', 'data_source', 'data_collection_type', 'collection_method',
+        'extra', 'notes', 'recorded_by',
     ];
 
     protected $casts = [

@@ -18,7 +18,8 @@ class TcmAnalysis extends Model
         'coefficient_source', 'respondent_count', 'total_visitors', 'mean_travel_cost',
         'beta_0', 'beta_1', 'coef_income', 'coef_age', 'coef_education', 'coef_substitute',
         'estimation_method', 'converged', 'log_likelihood', 'dispersion_alpha',
-        'diagnostics', 'period_year', 'data_source', 'notes', 'created_by',
+        'diagnostics', 'period_year', 'data_source', 'data_collection_type', 'collection_method',
+        'notes', 'created_by',
     ];
 
     protected $casts = [

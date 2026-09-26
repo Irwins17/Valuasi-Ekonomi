@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AbmData;
 use App\Models\Project;
 use App\Services\Valuation\EconomicValuationCalculator;
+use App\Support\DataCollectionTypes;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -139,6 +140,8 @@ class AbmController extends Controller
             'household_size' => ['nullable', 'integer', 'min:1'],
             'affected_population' => ['nullable', 'integer', 'min:0'],
             'data_source' => ['nullable', 'string', 'max:255'],
+            'data_collection_type' => ['nullable', Rule::in(array_keys(DataCollectionTypes::TYPES))],
+            'collection_method' => ['nullable', Rule::in(DataCollectionTypes::allMethodCodes())],
             'notes' => ['nullable', 'string', 'max:500'],
         ], [], [
             'respondent_code' => 'ID responden',

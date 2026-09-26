@@ -18,7 +18,7 @@ class CeData extends Model
         'scenario_title', 'choice_set', 'alternative_a', 'alternative_b', 'status_quo',
         'chosen_alternative', 'attribute_1', 'attribute_1_level', 'attribute_2',
         'attribute_2_level', 'attribute_3', 'attribute_3_level', 'cost_attribute',
-        'data_source', 'notes', 'recorded_by',
+        'data_source', 'data_collection_type', 'collection_method', 'notes', 'recorded_by',
     ];
 
     protected $casts = [

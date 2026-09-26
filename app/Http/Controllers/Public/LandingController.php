@@ -98,7 +98,7 @@ class LandingController extends Controller
         $settings = $project->valuation_settings;
 
         return Inertia::render('Public/ProjectDetail', [
-            'project' => $project,
+            'project' => $project->toInertiaArray(),
             'benefits' => $this->presentValues->benefits($project->benefits()->get(), $settings),
             'costs' => $this->presentValues->costs($project->costs()->get(), $settings),
             // Published figures carry their assumptions, so a reader can tell

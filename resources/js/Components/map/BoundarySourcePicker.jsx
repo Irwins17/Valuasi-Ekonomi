@@ -7,7 +7,7 @@ const TABS = [
     { key: 'shp', label: 'Upload File SHP' },
 ];
 
-export default function BoundarySourcePicker({ value, onParsed, onClear, province, onProvinceChange, height = 420 }) {
+export default function BoundarySourcePicker({ value, onParsed, onClear, province, onProvinceChange, height = 560 }) {
     const [tab, setTab] = useState('wilayah');
 
     return (

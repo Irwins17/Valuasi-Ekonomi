@@ -9,6 +9,7 @@ use App\Models\ValuationModule;
 use App\Services\Valuation\BenefitCostPresentValues;
 use App\Services\Valuation\DoubleCountingChecker;
 use App\Services\Valuation\EcosystemServiceValuationCalculator;
+use App\Support\EcosystemObjectTypes;
 use App\Support\Provinces;
 use App\Support\ValuationModuleCatalog;
 use Illuminate\Http\Request;
@@ -39,7 +40,17 @@ class ProjectController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Projects/Create');
+        return Inertia::render('Admin/Projects/Create', [
+            'moduleCatalog' => collect(ValuationModuleCatalog::all())
+                ->map(fn ($m) => [
+                    'code' => $m['code'],
+                    'name' => $m['name'],
+                    'description' => $m['description'],
+                    'service_category' => $m['service_category'],
+                ])
+                ->values(),
+            'serviceCategories' => ValuationModuleCatalog::SERVICE_CATEGORIES,
+        ]);
     }
 
     public function store(Request $request)
@@ -50,10 +61,16 @@ class ProjectController extends Controller
             'description' => ['nullable'],
             'location' => ['required'],
             'province' => ['nullable', Rule::in(Provinces::NAMES)],
+            'ecosystem_object_type' => ['nullable', Rule::in(array_keys(EcosystemObjectTypes::OPTIONS))],
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
             'boundary_geojson' => ['nullable', 'array'],
+            'selected_modules' => ['nullable', 'array'],
+            'selected_modules.*' => [Rule::in(ValuationModuleCatalog::codes())],
         ]);
+
+        $selectedModules = $validated['selected_modules'] ?? [];
+        unset($validated['selected_modules']);
 
         $project = Project::create([
             ...$validated,
@@ -61,8 +78,49 @@ class ProjectController extends Controller
             'status' => 'draft',
         ]);
 
+        $this->hideUnselectedModules($project, $selectedModules);
+
         return redirect()->route('admin.projects.show', $project)
             ->with('success', 'Project berhasil dibuat');
+    }
+
+    /**
+     * Only the modules picked on the create form start visible on the
+     * project's "Status Modul" list — everything else in the catalog gets a
+     * hide override, so a fresh project shows a short, relevant list instead
+     * of every built-in module at once. Hidden modules stay one toggle away
+     * via "Konfigurasi" on the Modul Valuasi page, nothing is deleted.
+     */
+    private function hideUnselectedModules(Project $project, array $selectedCodes): void
+    {
+        $rows = collect(ValuationModuleCatalog::all())
+            ->reject(fn ($m) => in_array($m['code'], $selectedCodes, true))
+            ->map(fn ($m) => [
+                'project_id' => $project->id,
+                'code' => $m['code'],
+                'name' => $m['name'],
+                'valuation_method' => $m['valuation_method'],
+                'method_group' => $m['method_group'],
+                'service_category' => $m['service_category'],
+                'subcategory' => $m['subcategory'],
+                'formula_summary' => $m['formula_summary'],
+                'input_variables' => $m['input_variables'],
+                'output_unit' => $m['output_unit'],
+                'status' => 'draft',
+                'description' => $m['description'],
+                'show_on_project_detail' => false,
+                'is_builtin' => true,
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ])
+            ->values()
+            ->all();
+
+        if (! empty($rows)) {
+            ValuationModule::insert($rows);
+        }
     }
 
     public function show($id): Response
@@ -72,7 +130,9 @@ class ProjectController extends Controller
         $settings = $project->valuation_settings;
 
         return Inertia::render('Admin/Projects/Show', [
-            'project' => $project,
+            // Hides boundary_geojson: this page renders no map, and an uploaded
+            // survey-area polygon would otherwise add megabytes to the payload.
+            'project' => $project->makeHidden('boundary_geojson'),
             // through() keeps the paginator's meta intact while giving each row
             // a pv_value that is on the same basis as the totals above it.
             'benefits' => $project->benefits()->paginate(5)
@@ -159,7 +219,8 @@ class ProjectController extends Controller
     public function edit($id): Response
     {
         $project = Project::findOrFail($id);
-        return Inertia::render('Admin/Projects/Edit', ['project' => $project]);
+
+        return Inertia::render('Admin/Projects/Edit', ['project' => $project->toInertiaArray()]);
     }
 
     public function update(Request $request, $id)
@@ -171,6 +232,7 @@ class ProjectController extends Controller
             'description' => ['nullable'],
             'location' => ['required'],
             'province' => ['nullable', Rule::in(Provinces::NAMES)],
+            'ecosystem_object_type' => ['nullable', Rule::in(array_keys(EcosystemObjectTypes::OPTIONS))],
             'latitude' => ['nullable', 'numeric'],
             'longitude' => ['nullable', 'numeric'],
             'boundary_geojson' => ['nullable', 'array'],

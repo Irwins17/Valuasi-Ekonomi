@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\EcosystemServiceRecord;
 use App\Models\Project;
 use App\Services\Valuation\EconomicValuationCalculator;
+use App\Support\DataCollectionTypes;
 use App\Support\EcosystemServiceSchemas;
 use App\Support\ValuationModuleCatalog;
 use Illuminate\Http\Request;
@@ -159,6 +160,8 @@ class EcosystemServiceController extends Controller
 
         $rules = [
             'record_code' => ['required', 'string', 'max:60', $codeRule],
+            'data_collection_type' => ['nullable', Rule::in(array_keys(DataCollectionTypes::TYPES))],
+            'collection_method' => ['nullable', Rule::in(DataCollectionTypes::allMethodCodes())],
             'notes' => ['nullable', 'string', 'max:500'],
         ];
 
@@ -231,6 +234,8 @@ class EcosystemServiceController extends Controller
             'area_ha' => $validated['area_ha'] ?? null,
             'period_year' => $validated['period_year'] ?? null,
             'data_source' => $validated['data_source'] ?? null,
+            'data_collection_type' => $validated['data_collection_type'] ?? null,
+            'collection_method' => $validated['collection_method'] ?? null,
             'notes' => $validated['notes'] ?? null,
             'extra' => $extra,
             ...$derived,

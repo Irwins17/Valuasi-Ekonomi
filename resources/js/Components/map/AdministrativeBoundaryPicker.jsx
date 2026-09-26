@@ -2,11 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import ProjectLocationMap from './ProjectLocationMap';
 import { PROVINCES } from '../../lib/provinces';
 import {PROVINCE_EMSIFA_ID, PROVINCE_BOUNDARY_CODE,PROVINCE_REGENCY_IDS,fetchRegencies,fetchDistricts,fetchVillages,} from '../../lib/wilayah';
-import { boundaryCentroid, countCoordinates, findInvalidCoordinate } from '../../lib/geo';
+import { boundaryCentroid, findInvalidCoordinate, roundCoordinatePrecision, simplifyToBudget } from '../../lib/geo';
 
-const MAX_COORDINATES = 400000;
+// Same budget the SHP uploader uses: anything denser is thinned client-side
+// rather than refused, so a high-detail kelurahan/kabupaten boundary still
+// draws instead of pushing the user to a manual upload.
+const MAX_COORDINATES = 60000;
 
-export default function AdministrativeBoundaryPicker({ province, onProvinceChange, value, onFound, onReset, height = 420 }) {
+export default function AdministrativeBoundaryPicker({ province, onProvinceChange, value, onFound, onReset, height = 560 }) {
 const [regencies, setRegencies] = useState([]);
     const [districts, setDistricts] = useState([]);
     const [villages, setVillages] = useState([]);
@@ -35,6 +38,7 @@ const [regencies, setRegencies] = useState([]);
 
         const emsifaId = PROVINCE_EMSIFA_ID[province];
         if (!emsifaId) return;
+        
 
         if (!skipAutoDraw) {
             lookupBoundary(1, PROVINCE_BOUNDARY_CODE[province] ?? emsifaId, province);
@@ -68,13 +72,20 @@ const [regencies, setRegencies] = useState([]);
             }
 
             const invalid = findInvalidCoordinate(data.boundary);
-            const tooDetailed = countCoordinates(data.boundary) > MAX_COORDINATES;
-            if (invalid || tooDetailed) {
-                setNotice({ type: 'warning', text: 'Batas wilayah untuk lokasi ini tidak valid atau terlalu detail untuk digambar otomatis. Gunakan upload SHP manual.' });
+            if (invalid) {
+                setNotice({ type: 'warning', text: 'Batas wilayah untuk lokasi ini tidak valid (koordinat di luar jangkauan). Gunakan upload SHP manual.' });
                 return;
             }
 
-            onFound?.(data.boundary, data.center, label);
+            const { geojson, simplified, before, after } = simplifyToBudget(data.boundary, MAX_COORDINATES);
+            if (simplified) {
+                setNotice({
+                    type: 'info',
+                    text: `Batas wilayah sangat detail (${before.toLocaleString('id-ID')} titik) dan disederhanakan otomatis menjadi ${after.toLocaleString('id-ID')} titik agar ringan digambar.`,
+                });
+            }
+
+            onFound?.(roundCoordinatePrecision(geojson), data.center, label);
         } catch (err) {
             if (myRequestId !== requestId.current) return;
             setNotice({ type: 'error', text: 'Gagal mengambil batas wilayah.' });

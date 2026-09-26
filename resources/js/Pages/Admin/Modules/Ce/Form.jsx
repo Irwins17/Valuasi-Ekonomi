@@ -3,6 +3,7 @@ import ModuleFormShell from '../../../../Components/modules/ModuleFormShell';
 import FormulaPanel from '../../../../Components/modules/FormulaPanel';
 import OutputPreview from '../../../../Components/modules/OutputPreview';
 import { toNumber } from '../../../../lib/format';
+import { DATA_COLLECTION_TYPES, collectionMethodsFor } from '../../../../lib/dataCollectionTypes';
 
 const CHOSEN_LABELS = { a: 'Alternatif A', b: 'Alternatif B', status_quo: 'Status Quo' };
 
@@ -30,6 +31,8 @@ export default function Form({ project, record, educationLevels }) {
         attribute_3_level: record?.attribute_3_level || '',
         cost_attribute: record?.cost_attribute ?? '',
         data_source: record?.data_source || '',
+        data_collection_type: record?.data_collection_type || '',
+        collection_method: record?.collection_method || '',
         notes: record?.notes || '',
     });
 
@@ -59,6 +62,8 @@ export default function Form({ project, record, educationLevels }) {
         { name: 'cost_attribute', label: 'Biaya / Pajak / Retribusi', type: 'currency', prefix: 'Rp', placeholder: 'Contoh: 25.000', hint: 'Atribut moneter — penyebut βp pada MWTP.' },
 
         { name: 'data_source', label: 'Sumber Data', type: 'text', placeholder: 'Contoh: Survei choice experiment 2026' },
+        { name: 'data_collection_type', label: 'Jenis Data', type: 'select', options: DATA_COLLECTION_TYPES.map((t) => [t.value, t.label]), placeholder: '-- Pilih jenis data --' },
+        { name: 'collection_method', label: 'Metode Pengumpulan', type: 'select', options: collectionMethodsFor(data.data_collection_type).map((m) => [m.value, m.label]), placeholder: '-- Pilih metode --' },
         { name: 'notes', label: 'Catatan (opsional)', type: 'textarea', full: true, maxLength: 500, placeholder: 'Catatan tambahan (opsional)' },
     ];
 
